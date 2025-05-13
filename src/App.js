@@ -15,7 +15,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
-import ParkingMap from './pages/ParkingMap';
 import Booking from './pages/Booking';
 import Reports from './pages/Reports';
 import Profile from './pages/Profile';
@@ -69,11 +68,10 @@ function App() {
                 
                 {/* Protected Routes */}
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/parking-map" element={<ProtectedRoute><ParkingMap /></ProtectedRoute>} />
                 <Route path="/booking" element={<ProtectedRoute><Home /></ProtectedRoute>} />
                 <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                <Route path="/slots" element={<ProtectedRoute><ParkingSlots /></ProtectedRoute>} />
+                {/* <Route path="/slots" element={<ProtectedRoute><ParkingSlots /></ProtectedRoute>} /> */}
                 <Route path="/view-bookings" element={<ProtectedRoute><ViewBookings /></ProtectedRoute>} />
                 
                 {/* Default Route */}
