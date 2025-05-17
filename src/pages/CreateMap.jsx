@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
-
 import ParkingAnnotator from "../components/ParkingAnnotator";
 import ParkingLive from "../components/ParkingLive";
-
 import io from "socket.io-client";
 
 const socket = io("http://localhost:5000");
@@ -44,7 +42,6 @@ function CreateMap(props) {
 
   useEffect(() => {
     const handleUpdate = (data) => {
-      console.log("Received:", data.free_slots);
       setFreeSlots(data.free_slots);
       setFrame(`data:image/jpeg;base64,${data.frame}`);
       setOriginalFrame(`data:image/jpeg;base64,${data.frame_original}`);
@@ -94,44 +91,12 @@ function CreateMap(props) {
       Math.round(width),
       Math.round(height),
     ]);
-    console.log(finalList);
-
-    // send to backend
     fetch("http://localhost:5000/api/parking/save-positions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ positions: finalList }),
-    }).then((res) => {
-      if (res.ok) alert("Saved successfully");
-      else alert("Error saving");
-    });
-  };
-  const handleSaveMap2 = () => {
-    const finalList = positions.map(({ x, y, index, width, height }) => [
-      Math.round(x),
-      Math.round(y),
-      index,
-      Math.round(width),
-      Math.round(height),
-    ]);
-
-    const formData = new FormData();
-    formData.append("positions", JSON.stringify(finalList));
-
-    if (mapImage) {
-      // assuming mapImage is a File or Blob
-      formData.append("mapImage", mapImage);
-    }
-
-    if (videoFile) {
-      formData.append("videoFile", videoFile);
-    }
-
-    fetch("http://localhost:5000/api/parking/save-map", {
-      method: "POST",
-      body: formData,
     }).then((res) => {
       if (res.ok) alert("Saved successfully");
       else alert("Error saving");
@@ -148,15 +113,14 @@ function CreateMap(props) {
 
     const formData = new FormData();
     formData.append("positions", JSON.stringify(finalList));
-    formData.append("areaName", selectedAreaName); // Add this
+    formData.append("areaName", selectedAreaName);
 
     if (mapImage) {
-      console.log("MAP IMAGE: ", mapImage);
-      formData.append("mapImage", mapImage); // should be a File object
+      formData.append("mapImage", mapImage);
     }
 
     if (videoFile) {
-      formData.append("videoFile", videoFile); // should be a File object
+      formData.append("videoFile", videoFile);
     }
 
     fetch("http://localhost:5000/api/parking/save-map", {
@@ -171,48 +135,159 @@ function CreateMap(props) {
   const handleSaveMapImage = () => {
     setMapImage(originalFrame);
   };
-  return (
-    <div>
-      <select onChange={(e) => setSelectedAreaName(e.target.value)}>
-        <option value="Main Entrance">Main Entrance</option>
-        <option value="Side Parking">Side Parking</option>
-      </select>
-      <input type="file" accept="video/*" onChange={handleVideoUpload} />
 
-      <ParkingAnnotator
-        imageSource={mapImage}
-        onMouseUp={handleMouseUp}
-        onMouseDown={handleMouseDown}
-        onSave={handleSave}
-        positions={positions}
-      />
-      {/* <ParkingLive /> */}
-      <button onClick={handleSaveMapImage} style={{ marginTop: "10px" }}>
-        Set Map Image
-      </button>
-      <button onClick={handleSaveMap} style={{ marginTop: "10px" }}>
-        Save Map
-      </button>
-      <div>
-        <h2>Live Parking Availability</h2>
-        <p>Free Slots: {freeSlots.length}</p>
-        {/* <ul>
-                {freeSlots.map((slot) => (
-                    <li key={slot}>Slot #{slot}</li>
-                ))}
-            </ul> */}
-        {frame && (
-          <>
-            <h3>Live Footage</h3>
-            <div className=" d-flex justify-content-center">
+  // --- DESIGN STYLES ---
+  const styles = {
+    container: {
+      fontFamily: "Segoe UI, Arial, sans-serif",
+      background: "#f7f9fb",
+      minHeight: "100vh",
+      padding: "32px",
+    },
+    card: {
+      background: "#fff",
+      borderRadius: "16px",
+      boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+      padding: "32px",
+      maxWidth: "1200px",
+      margin: "0 auto 32px auto",
+    },
+    header: {
+      fontSize: "2.2rem",
+      fontWeight: 700,
+      marginBottom: "12px",
+      color: "#2d3748",
+      letterSpacing: "0.5px",
+    },
+    select: {
+      padding: "8px 16px",
+      borderRadius: "8px",
+      border: "1px solid #cbd5e1",
+      marginRight: "16px",
+      fontSize: "1rem",
+      background: "#f1f5f9",
+    },
+    input: {
+      padding: "8px 16px",
+      borderRadius: "8px",
+      border: "1px solid #cbd5e1",
+      background: "#f1f5f9",
+      fontSize: "1rem",
+      marginRight: "16px",
+    },
+    button: {
+      padding: "10px 24px",
+      borderRadius: "8px",
+      border: "none",
+      background: "#2563eb",
+      color: "#fff",
+      fontWeight: 600,
+      fontSize: "1rem",
+      margin: "8px 8px 0 0",
+      cursor: "pointer",
+      transition: "background 0.2s",
+    },
+    buttonSecondary: {
+      background: "#64748b",
+    },
+    sectionTitle: {
+      fontSize: "1.3rem",
+      fontWeight: 600,
+      margin: "24px 0 12px 0",
+      color: "#334155",
+    },
+    liveFrame: {
+      width: "100%",
+      maxWidth: "900px",
+      borderRadius: "12px",
+      boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+      margin: "0 auto",
+      display: "block",
+    },
+    freeSlots: {
+      fontSize: "1.1rem",
+      color: "#059669",
+      fontWeight: 600,
+      margin: "8px 0",
+    },
+    annotatorWrapper: {
+      margin: "32px 0",
+      border: "1px solid #e2e8f0",
+      borderRadius: "12px",
+      background: "#f8fafc",
+      padding: "24px",
+    },
+    controls: {
+      marginBottom: "24px",
+      display: "flex",
+      alignItems: "center",
+      flexWrap: "wrap",
+      gap: "12px",
+    },
+  };
+
+  return (
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <div style={styles.header}>Parking Map Creator</div>
+        <div style={styles.controls}>
+          <select
+            style={styles.select}
+            onChange={(e) => setSelectedAreaName(e.target.value)}
+            defaultValue=""
+          >
+            <option value="" disabled>
+              Select Area
+            </option>
+            <option value="Main Entrance">Main Entrance</option>
+            <option value="Side Parking">Side Parking</option>
+          </select>
+          <input
+            style={styles.input}
+            type="file"
+            accept="video/*"
+            onChange={handleVideoUpload}
+          />
+          <button
+            style={styles.button}
+            onClick={handleSaveMapImage}
+            disabled={!originalFrame}
+          >
+            Set Map Image
+          </button>
+          <button
+            style={{ ...styles.button, ...styles.buttonSecondary }}
+            onClick={handleSaveMap}
+            disabled={!positions.length || !selectedAreaName}
+          >
+            Save Map
+          </button>
+        </div>
+        <div style={styles.annotatorWrapper}>
+          <ParkingAnnotator
+            imageSource={mapImage}
+            onMouseUp={handleMouseUp}
+            onMouseDown={handleMouseDown}
+            onSave={handleSave}
+            positions={positions}
+          />
+        </div>
+        <div>
+          <div style={styles.sectionTitle}>Live Parking Availability</div>
+          <div style={styles.freeSlots}>
+            Free Slots: {freeSlots.length}
+          </div>
+          {frame && (
+            <>
+              <div style={styles.sectionTitle}>Live Footage</div>
               <img
                 src={frame}
                 alt="Parking Frame"
-                style={{ width: "1000px" }}
+                style={styles.liveFrame}
               />
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
