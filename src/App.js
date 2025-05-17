@@ -20,7 +20,8 @@ import Reports from './pages/Reports';
 import Profile from './pages/Profile';
 import ParkingSlots from './pages/ParkingSlots';
 import ViewBookings from './pages/ViewBookings';
-
+import CreateMap from './pages/CreateMap';
+import ViewMaps from './pages/ViewMaps';
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = store.getState().auth.isAuthenticated;
@@ -69,6 +70,8 @@ function App() {
                 {/* Protected Routes */}
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/booking" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+                <Route path="/create-map" element={<ProtectedRoute><CreateMap /></ProtectedRoute>} />
+                <Route path="/view-maps" element={<ProtectedRoute><ViewMaps /></ProtectedRoute>} />
                 <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 {/* <Route path="/slots" element={<ProtectedRoute><ParkingSlots /></ProtectedRoute>} /> */}
