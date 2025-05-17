@@ -17,6 +17,7 @@ import {
 import {
   AccountCircle,
   DirectionsCar,
+  Map,
   Dashboard,
   Report,
   ExitToApp,
@@ -82,6 +83,22 @@ const Navbar = () => {
                 startIcon={<DirectionsCar />}
               >
                 View Bookings
+              </Button>
+              <Button
+                color="inherit"
+                component={RouterLink}
+                to="/create-map"
+                startIcon={<Map />}
+              >
+                Create Map
+              </Button>
+              <Button
+                color="inherit"
+                component={RouterLink}
+                to="/view-maps"
+                startIcon={<Map />}
+              >
+                My Maps
               </Button>
               
               <Button
