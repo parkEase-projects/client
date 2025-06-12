@@ -13,7 +13,7 @@ import {
   Snackbar
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { register, clearError } from '../store/slices/authSlice';
+import { register, clearError, logout } from '../store/slices/authSlice';
 import BackgroundLogo from '../images/bg-img.png';
 
 const Register = () => {
@@ -30,34 +30,134 @@ const Register = () => {
   });
   const [passwordError, setPasswordError] = useState('');
   const [successOpen, setSuccessOpen] = useState(false);
+  const [formErrors, setFormErrors] = useState({
+    username: '',
+    email: '',
+    phoneNumber: ''
+  });
+
+  // Email validation regex
+  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+  
+  // Phone number validation regex
+  const phoneRegex = /^\d{10}$/;
+
+  const validateField = (name, value) => {
+    let error = '';
+    switch (name) {
+      case 'email':
+        if (!emailRegex.test(value)) {
+          error = 'Please enter a valid email address';
+        }
+        break;
+      case 'phoneNumber':
+        if (!phoneRegex.test(value)) {
+          error = 'Phone number must be exactly 10 digits';
+        }
+        break;
+      default:
+        break;
+    }
+    return error;
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
       setSuccessOpen(true);
-      setTimeout(() => navigate('/dashboard'), 2000);
+      setTimeout(() => {
+        dispatch(logout()); // Logout after registration
+        navigate('/login');
+      }, 2000);
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, dispatch]);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (e.target.name === 'password' || e.target.name === 'confirmPassword') {
-      if (
-        (e.target.name === 'password' && e.target.value !== formData.confirmPassword) ||
-        (e.target.name === 'confirmPassword' && e.target.value !== formData.password)
-      ) {
-        setPasswordError('Passwords do not match');
-      } else {
-        setPasswordError('');
+  // Handle error messages
+  useEffect(() => {
+    if (error) {
+      // Check for specific error messages from backend
+      if (error.toLowerCase().includes('user already exists')) {
+        setFormErrors(prev => ({
+          ...prev,
+          username: 'This username is already taken. Please choose another.'
+        }));
+      } else if (error.toLowerCase().includes('email')) {
+        setFormErrors(prev => ({
+          ...prev,
+          email: error
+        }));
       }
     }
+  }, [error]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    // Clear the specific field error when user starts typing
+    setFormErrors(prev => ({
+      ...prev,
+      [name]: ''
+    }));
+    
+    // Clear the general error when user starts typing
+    if (error) {
+      dispatch(clearError());
+    }
+    
+    setFormData({ ...formData, [name]: value });
+
+    // Password match validation only if both passwords have been entered
+    if (name === 'password' || name === 'confirmPassword') {
+      if (name === 'password') {
+        // Only check match if confirmPassword has a value
+        if (formData.confirmPassword) {
+          if (value !== formData.confirmPassword) {
+            setPasswordError('Passwords do not match');
+          } else {
+            setPasswordError('');
+          }
+        }
+      } else if (name === 'confirmPassword') {
+        // Only check match if both passwords have values
+        if (value && formData.password) {
+          if (value !== formData.password) {
+            setPasswordError('Passwords do not match');
+          } else {
+            setPasswordError('');
+          }
+        }
+      }
+    }
+
+    // Field-specific validation
+    const fieldError = validateField(name, value);
+    setFormErrors(prev => ({
+      ...prev,
+      [name]: fieldError
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate all fields before submission
+    const emailError = validateField('email', formData.email);
+    const phoneError = validateField('phoneNumber', formData.phoneNumber);
+
+    // Check password match on submission
     if (formData.password !== formData.confirmPassword) {
       setPasswordError('Passwords do not match');
       return;
     }
+
+    setFormErrors({
+      ...formErrors,
+      email: emailError,
+      phoneNumber: phoneError
+    });
+
+    if (emailError || phoneError || passwordError) {
+      return;
+    }
+
     dispatch(register(formData));
   };
 
@@ -114,13 +214,21 @@ const Register = () => {
             <Typography component="h1" variant="h5">
               Register for ParkEase
             </Typography>
-            {error && (
+            {error && !formErrors.username && !formErrors.email && (
               <Alert
                 severity="error"
                 sx={{ width: '100%', mt: 2 }}
                 onClose={() => dispatch(clearError())}
               >
                 {error}
+              </Alert>
+            )}
+            {(formErrors.username || formErrors.email) && (
+              <Alert
+                severity="error"
+                sx={{ width: '100%', mt: 2 }}
+              >
+                {formErrors.username || formErrors.email}
               </Alert>
             )}
             {passwordError && (
@@ -144,6 +252,8 @@ const Register = () => {
                 autoFocus
                 value={formData.username}
                 onChange={handleChange}
+                error={!!formErrors.username}
+                helperText={formErrors.username}
               />
               <TextField
                 margin="normal"
@@ -155,6 +265,8 @@ const Register = () => {
                 autoComplete="email"
                 value={formData.email}
                 onChange={handleChange}
+                error={!!formErrors.email}
+                helperText={formErrors.email}
               />
               <TextField
                 margin="normal"
@@ -166,6 +278,8 @@ const Register = () => {
                 autoComplete="tel"
                 value={formData.phoneNumber}
                 onChange={handleChange}
+                error={!!formErrors.phoneNumber}
+                helperText={formErrors.phoneNumber}
               />
               <TextField
                 margin="normal"
