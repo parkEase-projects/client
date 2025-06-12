@@ -9,6 +9,8 @@ import {
   createBooking 
 } from '../data/mockData';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const statusColors = {
   available: '#fff',
   selected: '#4caf50',
@@ -31,18 +33,18 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
 const ParkingSlots = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const query = useQuery();
   
-  // Get data from location state
+  // Get data from location state or URL parameters
   const area = location.state?.areaName || query.get('area');
   const date = location.state?.rawDate || query.get('date');
   const time = location.state?.rawTime || query.get('time');
-  const areaId = parseInt(location.state?.areaId) || 1; // Default to 1 if not provided
+  const areaId = location.state?.areaId || 1; // Default to 1 if not provided
+
+  console.log('ParkingSlots - Received params:', { area, date, time, areaId }); // Debug log
 
   const [slots, setSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -194,7 +196,7 @@ const ParkingSlots = () => {
 
   const handleViewBookings = () => {
     setSuccessDialogOpen(false);
-    navigate('/bookings', {
+    navigate('/view-bookings', {
       state: {
         bookingReference: bookingReference
       }

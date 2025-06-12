@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { parkingAreas, getSlotsByArea } from '../../data/mockData';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -8,8 +9,8 @@ export const fetchParkingAreas = createAsyncThunk(
   'parking/fetchAreas',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_URL}/api/parking/areas`);
-      return response.data;
+      // Return mock data instead of making API call
+      return parkingAreas;
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
@@ -20,8 +21,8 @@ export const fetchAreaSlots = createAsyncThunk(
   'parking/fetchAreaSlots',
   async (areaId, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_URL}/api/parking/areas/${areaId}/slots`);
-      return response.data;
+      // Use mock data instead of API call
+      return getSlotsByArea(areaId);
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
@@ -32,10 +33,8 @@ export const fetchAvailableSlots = createAsyncThunk(
   'parking/fetchAvailableSlots',
   async ({ startTime, endTime, areaId }, { rejectWithValue }) => {
     try {
-      const response = await axios.get(
-        `${API_URL}/api/parking/slots/available?start_time=${startTime}&end_time=${endTime}&area_id=${areaId}`
-      );
-      return response.data;
+      // Use mock data instead of API call
+      return getSlotsByArea(areaId);
     } catch (error) {
       return rejectWithValue(error.response.data);
     }

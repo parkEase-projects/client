@@ -180,23 +180,7 @@ const Navbar = () => {
             </Box>
           </>
         ) : (
-          <Box>
-            <Button
-              color="inherit"
-              component={RouterLink}
-              to="/login"
-              sx={{ mr: 1 }}
-            >
-              Login
-            </Button>
-            <Button
-              color="inherit"
-              component={RouterLink}
-              to="/register"
-              variant="outlined"
-            >
-              Register
-            </Button>
+          <Box>            
           </Box>
         )}
       </Toolbar>

@@ -3,16 +3,18 @@ export const parkingAreas = [
     {
         id: 1,
         name: 'Main Entrance',
-        totalSlots: 10,
+        totalSlots: 20,
         description: 'Near the main building entrance',
-        status: 'active'
+        status: 'active',
+        available_slots: 18
     },
     {
         id: 2,
         name: 'Side Parking',
-        totalSlots: 10,
+        totalSlots: 20,
         description: 'Next to the side entrance',
-        status: 'active'
+        status: 'active',
+        available_slots: 16
     }
 ];
 
@@ -30,17 +32,24 @@ const initializeDefaultSlots = () => {
                 id: parkingSlots.length + 1,
                 slotNumber: i,
                 areaId: area.id,
-                status: randomStatus,
-                user: randomStatus === 'booked' ? 'User' + Math.floor(Math.random() * 100) : null
+                status: randomStatus
             });
         }
     });
+    // Store in localStorage
+    localStorage.setItem('parkingSlots', JSON.stringify(parkingSlots));
 };
 
 // Helper function to get slots for a specific area
 export const getSlotsByArea = (areaId) => {
-    console.log('Getting slots for area:', areaId); // Debug log
-    console.log('Current parkingSlots:', parkingSlots); // Debug log
+    // Try to get slots from localStorage first
+    const storedSlots = localStorage.getItem('parkingSlots');
+    if (storedSlots) {
+        const allSlots = JSON.parse(storedSlots);
+        return allSlots.filter(slot => slot.areaId === parseInt(areaId));
+    }
+    // If no stored slots, initialize and return
+    initializeDefaultSlots();
     return parkingSlots.filter(slot => slot.areaId === parseInt(areaId));
 };
 
@@ -51,43 +60,34 @@ export const getAreaById = (areaId) => {
 
 // Helper function to update slot status
 export const updateSlotStatus = (slotId, newStatus) => {
-    const slotIndex = parkingSlots.findIndex(s => s.id === slotId);
-    if (slotIndex !== -1) {
-        parkingSlots[slotIndex].status = newStatus;
-        // Update localStorage
-        localStorage.setItem('parkingSlots', JSON.stringify(parkingSlots));
-    }
-    return parkingSlots[slotIndex];
-};
-
-// Helper function to get available slots in an area
-export const getAvailableSlots = (areaId) => {
-    return parkingSlots.filter(slot => 
-        slot.areaId === parseInt(areaId) && 
-        slot.status === 'available'
+    const storedSlots = localStorage.getItem('parkingSlots');
+    let allSlots = storedSlots ? JSON.parse(storedSlots) : parkingSlots;
+    
+    allSlots = allSlots.map(slot => 
+        slot.id === slotId ? { ...slot, status: newStatus } : slot
     );
+    
+    localStorage.setItem('parkingSlots', JSON.stringify(allSlots));
+    return allSlots.find(s => s.id === slotId);
 };
 
-// Function to create a new booking
-export const createBooking = (bookingData) => {
-    const newBooking = {
-        id: bookings.length + 1,
-        ...bookingData,
-        status: 'upcoming'
-    };
-    
-    // Add to bookings array
-    bookings.push(newBooking);
-    
-    // Update slot status
-    updateSlotStatus(bookingData.slotId, 'booked');
-    
-    return newBooking;
+// Calculate booking amount (₹50 per hour)
+export const calculateBookingAmount = (startTime, endTime) => {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const hours = Math.ceil((end - start) / (1000 * 60 * 60));
+    return hours * 50;
 };
 
-// Function to get user's bookings
-export const getUserBookings = (userId) => {
-    return bookings.filter(booking => booking.userId === userId);
+// Get all bookings
+export const getBookings = () => {
+    return JSON.parse(localStorage.getItem('bookings') || '[]');
+};
+
+// Get booking by ID
+export const getBookingById = (bookingId) => {
+    const bookings = getBookings();
+    return bookings.find(booking => booking.id === bookingId);
 };
 
 // Mock user data
@@ -121,36 +121,33 @@ export const bookings = [
     }
 ];
 
-// Calculate booking amount (₹50 per hour)
-export const calculateBookingAmount = (startTime, endTime) => {
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    const hours = Math.ceil((end - start) / (1000 * 60 * 60));
-    return hours * 50;
+// Get user's bookings
+export const getUserBookings = (userId) => {
+    const allBookings = getBookings();
+    return allBookings.filter(booking => booking.userId === userId);
 };
 
-// Initialize slots from localStorage or default to initial state
-export const initializeSlots = () => {
-    const storedSlots = localStorage.getItem('parkingSlots');
-    if (storedSlots) {
-        parkingSlots = JSON.parse(storedSlots);
-    } else {
-        initializeDefaultSlots();
-        localStorage.setItem('parkingSlots', JSON.stringify(parkingSlots));
-    }
-    console.log('Initialized slots:', parkingSlots); // Debug log
+// Get available slots in an area
+export const getAvailableSlots = (areaId) => {
+    return parkingSlots.filter(slot => 
+        slot.areaId === parseInt(areaId) && 
+        slot.status === 'available'
+    );
 };
 
-// Get all bookings
-export const getBookings = () => {
-    return JSON.parse(localStorage.getItem('bookings') || '[]');
+// Function to create a new booking
+export const createBooking = (bookingData) => {
+    const existingBookings = getBookings();
+    const newBooking = {
+        id: Date.now(),
+        ...bookingData,
+        status: 'upcoming'
+    };
+    existingBookings.push(newBooking);
+    localStorage.setItem('bookings', JSON.stringify(existingBookings));
+    updateSlotStatus(bookingData.slotId, 'booked');
+    return newBooking;
 };
 
-// Get booking by ID
-export const getBookingById = (bookingId) => {
-    const bookings = getBookings();
-    return bookings.find(booking => booking.id === bookingId);
-};
-
-// Initialize the slots when the module loads
-initializeSlots(); 
+// Initialize slots when the module loads
+initializeDefaultSlots(); 
