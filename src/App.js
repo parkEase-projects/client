@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Provider } from 'react-redux';
@@ -22,6 +22,7 @@ import ParkingSlots from './pages/ParkingSlots';
 import ViewBookings from './pages/ViewBookings';
 import CreateMap from './pages/CreateMap';
 import ViewMaps from './pages/ViewMaps';
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = store.getState().auth.isAuthenticated;
@@ -52,37 +53,48 @@ const theme = createTheme({
   },
 });
 
+// AppContent component to use useLocation hook
+function AppContent() {
+  const location = useLocation();
+  const hideFooterPaths = ['/login', '/register', '/forgot-password'];
+  const shouldShowFooter = !hideFooterPaths.includes(location.pathname);
+
+  return (
+    <div className="App">
+      <Navbar />
+      <main style={{ minHeight: shouldShowFooter ? 'calc(100vh - 64px - 200px)' : 'calc(100vh - 64px)', padding: '20px' }}>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+          <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+          
+          {/* Protected Routes */}
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/booking" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/create-map" element={<ProtectedRoute><CreateMap /></ProtectedRoute>} />
+          <Route path="/view-maps" element={<ProtectedRoute><ViewMaps /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/slots" element={<ParkingSlots />} />
+          <Route path="/view-bookings" element={<ProtectedRoute><ViewBookings /></ProtectedRoute>} />
+          
+          {/* Default Route */}
+          <Route path="/" element={<Navigate to="/dashboard" />} />
+        </Routes>
+      </main>
+      {shouldShowFooter && <Footer />}
+    </div>
+  );
+}
+
 function App() {
   return (
     <Provider store={store}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Router>
-          <div className="App">
-            <Navbar />
-            <main style={{ minHeight: 'calc(100vh - 64px - 200px)', padding: '20px' }}>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-                <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-                <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
-                
-                {/* Protected Routes */}
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/booking" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-                <Route path="/create-map" element={<ProtectedRoute><CreateMap /></ProtectedRoute>} />
-                <Route path="/view-maps" element={<ProtectedRoute><ViewMaps /></ProtectedRoute>} />
-                <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                {/* <Route path="/slots" element={<ProtectedRoute><ParkingSlots /></ProtectedRoute>} /> */}
-                <Route path="/view-bookings" element={<ProtectedRoute><ViewBookings /></ProtectedRoute>} />
-                
-                {/* Default Route */}
-                <Route path="/" element={<Navigate to="/dashboard" />} />
-              </Routes>
-            </main>
-            <Footer />
-          </div>
+          <AppContent />
         </Router>
       </ThemeProvider>
     </Provider>

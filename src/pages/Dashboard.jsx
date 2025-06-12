@@ -64,7 +64,7 @@ const Dashboard = () => {
   const getRecentBookings = () => {
     return [...bookings]
       .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
-      .slice(0, 5);
+      .slice(0, 3);
   };
 
   return (
@@ -97,7 +97,7 @@ const Dashboard = () => {
             <CardActions>
               <Button
                 size="small"
-                // onClick={() => navigate('/bookings')}
+                onClick={() => navigate('/view-bookings', { state: { bookingType: 'past' } })}
               >
                 View Details
               </Button>
@@ -119,7 +119,7 @@ const Dashboard = () => {
             <CardActions>
               <Button
                 size="small"
-                onClick={() => navigate('/view-bookings')}
+                onClick={() => navigate('/view-bookings', { state: { bookingType: 'upcoming' } })}
               >
                 View Details
               </Button>
@@ -138,14 +138,6 @@ const Dashboard = () => {
                 ₹{getTotalSpent()}
               </Typography>
             </CardContent>
-            <CardActions>
-              <Button
-                size="small"
-                onClick={() => navigate('/bookings')}
-              >
-                View Details
-              </Button>
-            </CardActions>
           </Card>
         </Grid>
 

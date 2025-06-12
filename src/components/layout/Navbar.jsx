@@ -71,22 +71,6 @@ const Navbar = () => {
               <Button
                 color="inherit"
                 component={RouterLink}
-                to="/booking"
-                startIcon={<DirectionsCar />}
-              >
-                Book Parking
-              </Button>
-              <Button
-                color="inherit"
-                component={RouterLink}
-                to="/view-bookings"
-                startIcon={<DirectionsCar />}
-              >
-                View Bookings
-              </Button>
-              <Button
-                color="inherit"
-                component={RouterLink}
                 to="/create-map"
                 startIcon={<Map />}
               >
@@ -180,23 +164,7 @@ const Navbar = () => {
             </Box>
           </>
         ) : (
-          <Box>
-            <Button
-              color="inherit"
-              component={RouterLink}
-              to="/login"
-              sx={{ mr: 1 }}
-            >
-              Login
-            </Button>
-            <Button
-              color="inherit"
-              component={RouterLink}
-              to="/register"
-              variant="outlined"
-            >
-              Register
-            </Button>
+          <Box>            
           </Box>
         )}
       </Toolbar>
