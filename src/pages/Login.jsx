@@ -22,6 +22,13 @@ const Login = () => {
     email: '',
     password: '',
   });
+  const [formErrors, setFormErrors] = useState({
+    email: '',
+    password: ''
+  });
+
+  // Email validation regex
+  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -29,12 +36,70 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Handle backend error messages
+  useEffect(() => {
+    if (error) {
+      if (error.toLowerCase().includes('user not found') || error.toLowerCase().includes('no user')) {
+        setFormErrors(prev => ({
+          ...prev,
+          email: 'User not found. Please check your email or register.',
+          password: ''
+        }));
+      } else if (error.toLowerCase().includes('invalid credentials') || error.toLowerCase().includes('incorrect')) {
+        setFormErrors(prev => ({
+          ...prev,
+          password: 'Incorrect password. Please try again.',
+          email: ''
+        }));
+      }
+    }
+  }, [error]);
+
+  const validateEmail = (email) => {
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address';
+    }
+    return '';
+  };
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+
+    // Clear errors when user starts typing
+    setFormErrors(prev => ({
+      ...prev,
+      [name]: ''
+    }));
+
+    // Clear the general error when user starts typing
+    if (error) {
+      dispatch(clearError());
+    }
+
+    // Validate email format while typing
+    if (name === 'email') {
+      const emailError = validateEmail(value);
+      setFormErrors(prev => ({
+        ...prev,
+        email: emailError
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate email before submission
+    const emailError = validateEmail(formData.email);
+    if (emailError) {
+      setFormErrors(prev => ({
+        ...prev,
+        email: emailError
+      }));
+      return;
+    }
+
     dispatch(login(formData));
   };
 
@@ -62,7 +127,8 @@ const Login = () => {
 
       {/* Right side - Login Form */}
       <Container 
-        component="main"
+        component="main" 
+        maxWidth="xs"
         sx={{
           flex: 1,
           display: 'flex',
@@ -85,20 +151,20 @@ const Login = () => {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              width: '80%',
+              width: '100%',
               backgroundColor: 'white',
             }}
           >
             <Typography component="h1" variant="h5">
               Sign in to ParkEase
             </Typography>
-            {error && (
+            {(formErrors.email || formErrors.password) && (
               <Alert
                 severity="error"
                 sx={{ width: '100%', mt: 2 }}
-                onClose={() => dispatch(clearError())}
+                onClose={() => setFormErrors({ email: '', password: '' })}
               >
-                {error}
+                {formErrors.email || formErrors.password}
               </Alert>
             )}
             <Box
@@ -117,6 +183,8 @@ const Login = () => {
                 autoFocus
                 value={formData.email}
                 onChange={handleChange}
+                error={!!formErrors.email}
+                helperText={formErrors.email}
               />
               <TextField
                 margin="normal"
@@ -129,13 +197,15 @@ const Login = () => {
                 autoComplete="current-password"
                 value={formData.password}
                 onChange={handleChange}
+                error={!!formErrors.password}
+                helperText={formErrors.password}
               />
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
                 sx={{ mt: 3, mb: 2 }}
-                disabled={loading}
+                disabled={loading || !!formErrors.email}
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </Button>
