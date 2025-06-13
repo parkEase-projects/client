@@ -22,6 +22,10 @@ import ParkingSlots from './pages/ParkingSlots';
 import ViewBookings from './pages/ViewBookings';
 import CreateMap from './pages/CreateMap';
 import ViewMaps from './pages/ViewMaps';
+import AboutUs from './pages/AboutUs';
+import ContactUs from './pages/ContactUs';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -29,10 +33,10 @@ const ProtectedRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
-// Public Route Component (redirects to dashboard if authenticated)
+// Public Route Component
 const PublicRoute = ({ children }) => {
   const isAuthenticated = store.getState().auth.isAuthenticated;
-  return isAuthenticated ? <Navigate to="/dashboard" /> : children;
+  return !isAuthenticated ? children : <Navigate to="/dashboard" />;
 };
 
 // Create theme
@@ -78,6 +82,12 @@ function AppContent() {
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/slots" element={<ParkingSlots />} />
           <Route path="/view-bookings" element={<ProtectedRoute><ViewBookings /></ProtectedRoute>} />
+          
+          {/* Footer Pages - Public */}
+          <Route path="/about-us" element={<AboutUs />} />
+          <Route path="/contact-us" element={<ContactUs />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
           
           {/* Default Route */}
           <Route path="/" element={<Navigate to="/dashboard" />} />

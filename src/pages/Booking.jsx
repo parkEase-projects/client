@@ -102,7 +102,7 @@ const Booking = () => {
 
         <Box mt={2} display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6" color="primary">
-            ₹{booking.amount}
+            Rs. {booking.amount}
           </Typography>
           {!isHistory && booking.status === 'active' && (
             <Button
