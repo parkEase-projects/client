@@ -61,7 +61,8 @@ const Profile = () => {
     try {
       const response = await axios.post(`${API_URL}/api/user/profile/image`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'multipart/form-data',
+          // 'Authorization': `Bearer ${token}`
         }
       });
       dispatch(updateProfile({ ...user, profile_image: response.data.profile_image }));

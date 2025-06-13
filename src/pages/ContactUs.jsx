@@ -30,13 +30,13 @@ const ContactUs = () => {
     {
       icon: <PhoneIcon fontSize="large" sx={{ color: theme.palette.primary.main }} />,
       title: 'Phone',
-      content: '+91 98765 43210',
-      link: 'tel:+919876543210',
+      content: '+1 234 567 890',
+      link: 'tel:+1234567890',
     },
     {
       icon: <LocationIcon fontSize="large" sx={{ color: theme.palette.primary.main }} />,
       title: 'Location',
-      content: '123, ParkEase Lane, Bengaluru, India',
+      content: '123, ParkEase Lane, Colombo',
       link: null,
     },
   ];

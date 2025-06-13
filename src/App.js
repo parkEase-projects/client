@@ -33,7 +33,7 @@ const ProtectedRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
-// Public Route Component
+// Public Route Component (redirects to dashboard if authenticated)
 const PublicRoute = ({ children }) => {
   const isAuthenticated = store.getState().auth.isAuthenticated;
   return !isAuthenticated ? children : <Navigate to="/dashboard" />;
