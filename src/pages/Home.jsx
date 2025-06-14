@@ -92,31 +92,7 @@ const Home = () => {
   return (
     <div className="container mt-4">
       {/* Role-based action buttons */}
-      {(user?.role === 'admin' || user?.role === 'security') && (
-        <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-          <Stack direction="row" spacing={2} justifyContent="center">
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<VideocamIcon />}
-              onClick={() => navigate('/camera-view')}
-            >
-              Camera Views
-            </Button>
-            
-            {user?.role === 'admin' && (
-              <Button
-                variant="contained"
-                color="secondary"
-                startIcon={<SecurityIcon />}
-                onClick={() => navigate('/security-management')}
-              >
-                Manage Security Staff
-              </Button>
-            )}
-          </Stack>
-        </Paper>
-      )}
+      {/* Removed Manage Security Staff button as it should only appear in the Dashboard */}
 
       <h2 className="text-center mb-4">Parking Area Maps</h2>
       <SlotsCarousel/>      

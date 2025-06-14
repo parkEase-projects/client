@@ -34,19 +34,38 @@ const SecurityManagement = () => {
     { id: 1, name: 'John Doe', email: 'john@example.com', phone: '1234567890' },
     { id: 2, name: 'Jane Smith', email: 'jane@example.com', phone: '0987654321' },
   ]);
+  const [error, setError] = useState("");
+
+  const validateEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+  const validatePhone = (phone) => {
+    return /^\d{10}$/.test(phone);
+  };
 
   const handleAddStaff = () => {
-    if (newStaff.name && newStaff.email && newStaff.phone) {
-      setStaffList([
-        ...staffList,
-        {
-          id: staffList.length + 1,
-          ...newStaff,
-        },
-      ]);
-      setNewStaff({ name: '', email: '', phone: '' });
-      setOpenDialog(false);
+    if (!newStaff.name || !newStaff.email || !newStaff.phone) {
+      setError("All fields are required.");
+      return;
     }
+    if (!validateEmail(newStaff.email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (!validatePhone(newStaff.phone)) {
+      setError("Please enter a valid 10-digit phone number.");
+      return;
+    }
+    setStaffList([
+      ...staffList,
+      {
+        id: staffList.length + 1,
+        ...newStaff,
+      },
+    ]);
+    setNewStaff({ name: '', email: '', phone: '' });
+    setOpenDialog(false);
+    setError("");
   };
 
   const handleRemoveStaff = (id) => {
@@ -117,10 +136,11 @@ const SecurityManagement = () => {
           </Table>
         </TableContainer>
 
-        <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <Dialog open={openDialog} onClose={() => { setOpenDialog(false); setError(""); }}>
           <DialogTitle>Add New Security Staff</DialogTitle>
           <DialogContent>
             <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {error && <Alert severity="error">{error}</Alert>}
               <TextField
                 label="Name"
                 fullWidth

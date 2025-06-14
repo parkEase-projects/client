@@ -78,90 +78,6 @@ const Dashboard = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 6, mb: 6 }}>
-      {/* Role-specific action buttons */}
-      {(user?.role === 'admin' || user?.role === 'security') && (
-        <Paper 
-          elevation={3} 
-          sx={{ 
-            p: 4, 
-            mb: 6,
-            borderRadius: 2,
-            background: 'linear-gradient(145deg, #ffffff 0%, #f5f5f5 100%)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
-          }}
-        >
-          <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
-            Quick Actions
-          </Typography>
-          <Stack direction="row" spacing={3} justifyContent="center">
-            {/* Camera Views - Available for admin and security */}
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<Videocam />}
-              onClick={() => navigate('/camera-view')}
-              sx={{
-                px: 4,
-                py: 1.5,
-                borderRadius: 2,
-                textTransform: 'none',
-                fontSize: '1rem',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                '&:hover': {
-                  boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
-                }
-              }}
-            >
-              Camera Views
-            </Button>
-            
-            {/* Admin specific buttons */}
-            {user?.role === 'admin' && (
-              <>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  startIcon={<Security />}
-                  onClick={() => navigate('/security-management')}
-                  sx={{
-                    px: 4,
-                    py: 1.5,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontSize: '1rem',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                    '&:hover': {
-                      boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
-                    }
-                  }}
-                >
-                  Manage Security Staff
-                </Button>
-                <Button
-                  variant="contained"
-                  color="info"
-                  startIcon={<Assessment />}
-                  onClick={() => navigate('/reports')}
-                  sx={{
-                    px: 4,
-                    py: 1.5,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontSize: '1rem',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                    '&:hover': {
-                      boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
-                    }
-                  }}
-                >
-                  View Reports
-                </Button>
-              </>
-            )}
-          </Stack>
-        </Paper>
-      )}
-
       <Grid container spacing={4}>
         {/* Welcome Section */}
         <Grid item xs={12}>
@@ -400,20 +316,6 @@ const Dashboard = () => {
                     }}
                   >
                     Manage Security Staff
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    startIcon={<Map />}
-                    onClick={() => navigate('/create-map')}
-                    sx={{
-                      px: 3,
-                      py: 1.5,
-                      borderRadius: 2,
-                      textTransform: 'none',
-                      fontSize: '1rem'
-                    }}
-                  >
-                    Create Map
                   </Button>
                 </>
               )}
