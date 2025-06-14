@@ -68,22 +68,17 @@ const Navbar = () => {
         {isAuthenticated ? (
           <>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Button
-                color="inherit"
-                component={RouterLink}
-                to="/create-map"
-                startIcon={<Map />}
-              >
-                Create Map
-              </Button>
-              <Button
-                color="inherit"
-                component={RouterLink}
-                to="/view-maps"
-                startIcon={<Map />}
-              >
-                My Maps
-              </Button>
+              {/* Show Create Map button only for admin */}
+              {user?.role === 'admin' && (
+                <Button
+                  color="inherit"
+                  component={RouterLink}
+                  to="/create-map"
+                  startIcon={<Map />}
+                >
+                  Create Map
+                </Button>
+              )}
               
               <Button
                 color="inherit"

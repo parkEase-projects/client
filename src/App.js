@@ -8,6 +8,7 @@ import store from './store';
 // Layout components
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
+import ScrollToTop from './components/ScrollToTop';
 
 // Page components
 import Home from './pages/Home';
@@ -104,6 +105,7 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Router>
+          <ScrollToTop />
           <AppContent />
         </Router>
       </ThemeProvider>

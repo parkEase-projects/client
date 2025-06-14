@@ -19,7 +19,6 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import SecurityIcon from "@mui/icons-material/Security";
 import VideocamIcon from "@mui/icons-material/Videocam";
-import AssessmentIcon from "@mui/icons-material/Assessment";
 import { useNavigate } from "react-router-dom";
 import { fetchParkingAreas } from "../store/slices/parkingSlice";
 import { format, addDays } from "date-fns";
@@ -35,7 +34,7 @@ const Home = () => {
   const user = useSelector((state) => state.auth.user);
   const [selectedArea, setSelectedArea] = useState("");
   const [selectedDate, setSelectedDate] = useState(() => {
-  return new Date().toISOString().split("T")[0];
+    return new Date().toISOString().split("T")[0];
   });
   const [selectedTime, setSelectedTime] = useState("");
   const navigate = useNavigate();
@@ -106,41 +105,15 @@ const Home = () => {
             </Button>
             
             {user?.role === 'admin' && (
-              <>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  startIcon={<SecurityIcon />}
-                  onClick={() => navigate('/security-management')}
-                >
-                  Manage Security Staff
-                </Button>
-                <Button
-                  variant="contained"
-                  color="info"
-                  startIcon={<AssessmentIcon />}
-                  onClick={() => navigate('/reports')}
-                >
-                  View Reports
-                </Button>
-              </>
+              <Button
+                variant="contained"
+                color="secondary"
+                startIcon={<SecurityIcon />}
+                onClick={() => navigate('/security-management')}
+              >
+                Manage Security Staff
+              </Button>
             )}
-          </Stack>
-        </Paper>
-      )}
-
-      {/* Regular parker report button */}
-      {user?.role === 'parker' && (
-        <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-          <Stack direction="row" spacing={2} justifyContent="center">
-            <Button
-              variant="contained"
-              color="info"
-              startIcon={<AssessmentIcon />}
-              onClick={() => navigate('/reports')}
-            >
-              My Reports
-            </Button>
           </Stack>
         </Paper>
       )}
@@ -230,7 +203,6 @@ const Home = () => {
             item
             xs={2}
             md={1}
-            
           >
             <IconButton
               color="primary"

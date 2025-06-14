@@ -1,93 +1,71 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Typography, Grid, Card, CardContent, CardMedia, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import React from 'react';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import {
+  Container,
+  Grid,
+  Paper,
+  Typography,
+  Box,
+  Alert,
+} from '@mui/material';
+import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 
 const CameraView = () => {
-  const [cameras, setCameras] = useState([]);
-  const [selectedArea, setSelectedArea] = useState('all');
-  const [areas, setAreas] = useState([]);
-  const token = useSelector((state) => state.auth.token);
+  const user = useSelector(state => state.auth.user);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchParkingAreas();
-    fetchCameras();
-  }, []);
+  // Check if user has permission to view cameras
+  if (!user || (user.role !== 'admin' && user.role !== 'security')) {
+    return (
+      <Container>
+        <Alert severity="error" sx={{ mt: 4 }}>
+          You don't have permission to access this page.
+        </Alert>
+      </Container>
+    );
+  }
 
-  const fetchParkingAreas = async () => {
-    try {
-      const response = await axios.get('/api/parking/areas', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setAreas(response.data);
-    } catch (error) {
-      console.error('Error fetching parking areas:', error);
-    }
-  };
-
-  const fetchCameras = async () => {
-    try {
-      const response = await axios.get('/api/parking/cameras', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setCameras(response.data);
-    } catch (error) {
-      console.error('Error fetching cameras:', error);
-    }
-  };
-
-  const filteredCameras = selectedArea === 'all' 
-    ? cameras 
-    : cameras.filter(camera => camera.area_id === selectedArea);
+  // Mock camera locations - in a real app, this would come from the backend
+  const cameraLocations = [
+    { id: 1, name: 'Main Entrance', status: 'offline' },
+    { id: 2, name: 'Parking Level 1', status: 'offline' },
+    { id: 3, name: 'Parking Level 2', status: 'offline' },
+    { id: 4, name: 'Exit Gate', status: 'offline' },
+  ];
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Typography variant="h4" gutterBottom>
-        Security Camera Views
+        Camera Monitoring
       </Typography>
-
-      <FormControl fullWidth sx={{ mb: 3 }}>
-        <InputLabel>Filter by Area</InputLabel>
-        <Select
-          value={selectedArea}
-          label="Filter by Area"
-          onChange={(e) => setSelectedArea(e.target.value)}
-        >
-          <MenuItem value="all">All Areas</MenuItem>
-          {areas.map((area) => (
-            <MenuItem key={area.id} value={area.id}>
-              {area.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      
+      <Alert severity="info" sx={{ mb: 4 }}>
+        Camera integration is currently in development. This is a placeholder view.
+      </Alert>
 
       <Grid container spacing={3}>
-        {filteredCameras.map((camera) => (
+        {cameraLocations.map((camera) => (
           <Grid item xs={12} md={6} key={camera.id}>
-            <Card>
-              <CardMedia
-                component="img"
-                height="300"
-                image={camera.camera_url}
-                alt={camera.name}
-                sx={{
-                  objectFit: 'cover',
-                  backgroundColor: 'black'
-                }}
-              />
-              <CardContent>
+            <Paper elevation={3} sx={{ p: 2 }}>
+              <Box sx={{ 
+                height: 300, 
+                bgcolor: 'grey.200', 
+                display: 'flex', 
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 1
+              }}>
+                <VideocamOffIcon sx={{ fontSize: 60, color: 'grey.500', mb: 2 }} />
                 <Typography variant="h6" gutterBottom>
                   {camera.name}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Location: {camera.location}
+                <Typography color="text.secondary">
+                  Camera {camera.status}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Status: {camera.status}
-                </Typography>
-              </CardContent>
-            </Card>
+              </Box>
+            </Paper>
           </Grid>
         ))}
       </Grid>
