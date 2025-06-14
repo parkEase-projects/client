@@ -23,6 +23,7 @@ import {
   Videocam,
   Security,
   Assessment,
+  Map,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -368,20 +369,54 @@ const Dashboard = () => {
               >
                 View Bookings
               </Button>
-              <Button
-                variant="outlined"
-                startIcon={<AccessTime />}
-                onClick={() => navigate('/reports')}
-                sx={{
-                  px: 3,
-                  py: 1.5,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontSize: '1rem'
-                }}
-              >
-                View Reports
-              </Button>
+              {(user?.role === 'admin' || user?.role === 'security') && (
+                <Button
+                  variant="outlined"
+                  startIcon={<Videocam />}
+                  onClick={() => navigate('/camera-view')}
+                  sx={{
+                    px: 3,
+                    py: 1.5,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontSize: '1rem'
+                  }}
+                >
+                  Camera Views
+                </Button>
+              )}
+              {user?.role === 'admin' && (
+                <>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Security />}
+                    onClick={() => navigate('/security-management')}
+                    sx={{
+                      px: 3,
+                      py: 1.5,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontSize: '1rem'
+                    }}
+                  >
+                    Manage Security Staff
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Map />}
+                    onClick={() => navigate('/create-map')}
+                    sx={{
+                      px: 3,
+                      py: 1.5,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontSize: '1rem'
+                    }}
+                  >
+                    Create Map
+                  </Button>
+                </>
+              )}
             </Box>
           </Paper>
         </Grid>

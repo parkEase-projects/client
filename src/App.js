@@ -27,6 +27,8 @@ import AboutUs from './pages/AboutUs';
 import ContactUs from './pages/ContactUs';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import CameraView from './pages/CameraView';
+import SecurityManagement from './pages/SecurityManagement';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -83,6 +85,8 @@ function AppContent() {
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/slots" element={<ParkingSlots />} />
           <Route path="/view-bookings" element={<ProtectedRoute><ViewBookings /></ProtectedRoute>} />
+          <Route path="/camera-view" element={<ProtectedRoute><CameraView /></ProtectedRoute>} />
+          <Route path="/security-management" element={<ProtectedRoute><SecurityManagement /></ProtectedRoute>} />
           
           {/* Footer Pages - Public */}
           <Route path="/about-us" element={<AboutUs />} />
