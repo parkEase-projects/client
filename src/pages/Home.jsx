@@ -12,8 +12,7 @@ import {
   IconButton,
   CircularProgress,
   Alert,
-  Button,
-  Stack,
+  Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import SecurityIcon from "@mui/icons-material/Security";
@@ -21,18 +20,21 @@ import VideocamIcon from "@mui/icons-material/Videocam";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import { useNavigate } from "react-router-dom";
 import { fetchParkingAreas } from "../store/slices/parkingSlice";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 
 import ParkingLive from "../components/ParkingLive";
 import SlotsCarousel from "../components/SlotsCarousel";
 import ParkingAnnotator from "../components/ParkingAnnotator";
+import ParkingAreaList from "../components/ParkingAreaList";
 
 const Home = () => {
   const dispatch = useDispatch();
   const { areas, loading, error } = useSelector((state) => state.parking);
   const user = useSelector((state) => state.auth.user);
   const [selectedArea, setSelectedArea] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(() => {
+  return new Date().toISOString().split("T")[0];
+  });
   const [selectedTime, setSelectedTime] = useState("");
   const navigate = useNavigate();
 
@@ -75,6 +77,16 @@ const Home = () => {
   };
 
   const today = new Date().toISOString().split("T")[0];
+  const maxDate = addDays(new Date(), 7).toISOString().split('T')[0];
+
+  const handleDateChange = (e) => {
+    const selectedDate = new Date(e.target.value);
+    const maxAllowedDate = addDays(new Date(), 7);
+    
+    if (selectedDate <= maxAllowedDate) {
+      setSelectedDate(e.target.value);
+    }
+  };
 
   return (
     <div className="container mt-4">
@@ -132,7 +144,7 @@ const Home = () => {
       )}
 
       <h2 className="text-center mb-4">Parking Area Maps</h2>
-      <SlotsCarousel/>
+      <SlotsCarousel/>      
 
       <Paper elevation={3} sx={{ p: 3, mt: 4 }}>
         <h3 className="mb-4">Filter Parking Availability</h3>
@@ -141,9 +153,9 @@ const Home = () => {
             {error}
           </Alert>
         )}
-        <Grid container spacing={3} alignItems="center">
+        <Grid container spacing={3}>
           <Grid item xs={12} md={4}>
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth>
               <label style={{ display: "block", marginBottom: 8 }}>
                 Parking Area
               </label>
@@ -155,11 +167,16 @@ const Home = () => {
                 <Select
                   value={selectedArea}
                   onChange={(e) => setSelectedArea(e.target.value)}
-                  size="small"
+                  sx={{
+                    height: "41px",
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#ccc"
+                    }
+                  }}
                 >
                   {areas.map((area) => (
                     <MenuItem key={area.id} value={area.id}>
-                      {area.name} ({area.available_slots} slots available)
+                      {area.name} 
                     </MenuItem>
                   ))}
                 </Select>
@@ -171,16 +188,24 @@ const Home = () => {
             <input
               type="date"
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              onChange={handleDateChange}
               min={today}
+              max={maxDate}
               style={{
                 width: "100%",
-                padding: 8,
+                height: "41px",
+                padding: "8px 14px",
                 borderRadius: 4,
                 border: "1px solid #ccc",
                 cursor: "pointer",
+                backgroundColor: "#fff"
               }}
             />
+            <Box sx={{ minHeight: '20px', mt: 0.5 }}>
+              <Typography variant="caption" color="textSecondary">
+                You can only book up to 7 days in advance
+              </Typography>
+            </Box>
           </Grid>
           <Grid item xs={10} md={3}>
             <label style={{ display: "block", marginBottom: 8 }}>Time</label>
@@ -190,10 +215,12 @@ const Home = () => {
               onChange={(e) => setSelectedTime(e.target.value)}
               style={{
                 width: "100%",
-                padding: 8,
+                height: "41px",
+                padding: "8px 14px",
                 borderRadius: 4,
                 border: "1px solid #ccc",
                 cursor: "pointer",
+                backgroundColor: "#fff"
               }}
             />
           </Grid>
@@ -201,11 +228,7 @@ const Home = () => {
             item
             xs={2}
             md={1}
-            sx={{
-              display: "flex",
-              alignItems: "end",
-              justifyContent: "center",
-            }}
+            
           >
             <IconButton
               color="primary"

@@ -2,17 +2,17 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { parkingAreas, getSlotsByArea } from '../../data/mockData';
 
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = 'http://localhost:5000';
 
 // Async Thunks
 export const fetchParkingAreas = createAsyncThunk(
   'parking/fetchAreas',
   async (_, { rejectWithValue }) => {
     try {
-      // Return mock data instead of making API call
-      return parkingAreas;
+      const response = await axios.get(`${API_URL}/api/parking/areas`);
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data || { error: 'Failed to fetch parking areas' });
     }
   }
 );
