@@ -7,12 +7,6 @@ import {
   Box,
   Card,
   CardContent,
-  Alert,
-  CircularProgress,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel
 } from '@mui/material';
 import {
   BarChart,
@@ -29,158 +23,179 @@ import {
   Line,
   ResponsiveContainer,
 } from 'recharts';
-import { useSelector } from 'react-redux';
-import axios from 'axios';
-import { format } from 'date-fns';
-
-const API_URL = process.env.REACT_APP_API_URL;
+import { getBookings, getAreaById } from '../data/mockData';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 
 const Reports = () => {
-  const { user } = useSelector((state) => state.auth);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [timeRange, setTimeRange] = useState(30); // Default to 30 days
-  const [analytics, setAnalytics] = useState({
-    daily_bookings: [],
-    daily_revenue: [],
-    area_usage: [],
-    user_stats: [],
-    summary: {
-      total_bookings: 0,
-      total_revenue: 0,
-      active_users: 0
-    }
-  });
+  const [bookings, setBookings] = useState([]);
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [areaUsageData, setAreaUsageData] = useState([]);
+  const [revenueData, setRevenueData] = useState([]);
 
   useEffect(() => {
-    fetchAnalytics();
-  }, [timeRange]);
+    const allBookings = getBookings();
+    setBookings(allBookings);
 
-  const fetchAnalytics = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${API_URL}/api/reports/analytics?days=${timeRange}`);
-      setAnalytics(response.data);
-      setError(null);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to fetch analytics data');
-    } finally {
-      setLoading(false);
-    }
+    // Process data for different charts
+    processMonthlyData(allBookings);
+    processAreaUsageData(allBookings);
+    processRevenueData(allBookings);
+  }, []);
+
+  const processMonthlyData = (bookings) => {
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+    const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+    const dailyBookings = daysInMonth.map(day => {
+      const count = bookings.filter(booking => {
+        const bookingDate = new Date(booking.startTime);
+        return format(bookingDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
+      }).length;
+
+      return {
+        date: format(day, 'dd MMM'),
+        bookings: count,
+      };
+    });
+
+    setMonthlyData(dailyBookings);
   };
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const processAreaUsageData = (bookings) => {
+    const areaUsage = {};
+    bookings.forEach(booking => {
+      const areaName = getAreaById(booking.areaId)?.name || 'Unknown';
+      areaUsage[areaName] = (areaUsage[areaName] || 0) + 1;
+    });
+
+    const data = Object.entries(areaUsage).map(([name, value]) => ({
+      name,
+      value,
+    }));
+
+    setAreaUsageData(data);
+  };
+
+  const processRevenueData = (bookings) => {
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      return date;
+    }).reverse();
+
+    const data = last7Days.map(date => {
+      const dayRevenue = bookings
+        .filter(booking => format(new Date(booking.startTime), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'))
+        .reduce((total, booking) => total + (booking.amount || 0), 0);
+
+      return {
+        date: format(date, 'dd MMM'),
+        revenue: dayRevenue,
+      };
+    });
+
+    setRevenueData(data);
+  };
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
+  const calculateStats = () => {
+    const totalBookings = bookings.length;
+    const totalRevenue = bookings.reduce((sum, booking) => sum + (booking.amount || 0), 0);
+    const averageBookingValue = totalBookings ? (totalRevenue / totalBookings).toFixed(2) : 0;
+
+    return {
+      totalBookings,
+      totalRevenue,
+      averageBookingValue,
+      activeUsers: Math.floor(totalBookings * 0.7), // Mock active users calculation
+    };
+  };
+
+  const stats = calculateStats();
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Typography variant="h4">
-          {user?.role === 'admin' ? 'Overall Analytics & Reports' : 'My Booking Reports'}
-        </Typography>
-        <FormControl sx={{ minWidth: 120 }}>
-          <InputLabel>Time Range</InputLabel>
-          <Select
-            value={timeRange}
-            label="Time Range"
-            onChange={(e) => setTimeRange(e.target.value)}
-          >
-            <MenuItem value={7}>Last 7 Days</MenuItem>
-            <MenuItem value={30}>Last 30 Days</MenuItem>
-            <MenuItem value={90}>Last 90 Days</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 4 }} onClose={() => setError(null)}>
-          {error}
-        </Alert>
-      )}
+      <Typography variant="h4" gutterBottom>
+        Analytics & Reports
+      </Typography>
 
       {/* Quick Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={user?.role === 'admin' ? 3 : 4}>
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>
                 Total Bookings
               </Typography>
               <Typography variant="h4">
-                {analytics.summary.total_bookings}
+                {stats.totalBookings}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={user?.role === 'admin' ? 3 : 4}>
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>
                 Total Revenue
               </Typography>
               <Typography variant="h4">
-                Rs. {analytics.summary.total_revenue}
+                ₹{stats.totalRevenue}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={user?.role === 'admin' ? 3 : 4}>
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>
                 Avg. Booking Value
               </Typography>
               <Typography variant="h4">
-                Rs. {analytics.summary.total_bookings > 0 
-                  ? (analytics.summary.total_revenue / analytics.summary.total_bookings).toFixed(2) 
-                  : '0.00'}
+                ₹{stats.averageBookingValue}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
-        {user?.role === 'admin' && (
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  Active Users
-                </Typography>
-                <Typography variant="h4">
-                  {analytics.summary.active_users}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="textSecondary" gutterBottom>
+                Active Users
+              </Typography>
+              <Typography variant="h4">
+                {stats.activeUsers}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
 
       {/* Charts */}
       <Grid container spacing={3}>
-        {/* Daily Bookings Trend */}
+        {/* Monthly Bookings Trend */}
         <Grid item xs={12} md={8}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
-              Daily Bookings Trend
+              Monthly Bookings Trend
             </Typography>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={analytics.daily_bookings}>
+              <LineChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="count" name="Bookings" stroke="#8884d8" />
+                <Line type="monotone" dataKey="bookings" stroke="#8884d8" />
               </LineChart>
             </ResponsiveContainer>
           </Paper>
         </Grid>
 
-        {/* Area Usage Distribution */}
+        {/* Parking Area Usage Distribution */}
         <Grid item xs={12} md={4}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
@@ -189,16 +204,17 @@ const Reports = () => {
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={analytics.area_usage}
-                  dataKey="bookings"
-                  nameKey="area"
+                  data={areaUsageData}
+                  dataKey="value"
+                  nameKey="name"
                   cx="50%"
                   cy="50%"
-                  outerRadius={100}
+                  outerRadius={80}
+                  fill="#8884d8"
                   label
                 >
-                  {analytics.area_usage.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'][index % 5]} />
+                  {areaUsageData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -208,55 +224,24 @@ const Reports = () => {
           </Paper>
         </Grid>
 
-        {/* Daily Revenue Chart */}
+        {/* Revenue Chart */}
         <Grid item xs={12}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
-              Daily Revenue
+              Revenue Trend (Last 7 Days)
             </Typography>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={analytics.daily_revenue}>
+              <BarChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="revenue" name="Revenue (Rs. )" fill="#82ca9d" />
+                <Bar dataKey="revenue" fill="#82ca9d" name="Revenue (₹)" />
               </BarChart>
             </ResponsiveContainer>
           </Paper>
         </Grid>
-
-        {/* User Statistics Table (Admin Only) */}
-        {user?.role === 'admin' && analytics.user_stats.length > 0 && (
-          <Grid item xs={12}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                User Statistics
-              </Typography>
-              <Box sx={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: 'left', padding: '12px' }}>Username</th>
-                      <th style={{ textAlign: 'right', padding: '12px' }}>Total Bookings</th>
-                      <th style={{ textAlign: 'right', padding: '12px' }}>Total Spent (Rs. )</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {analytics.user_stats.map((user, index) => (
-                      <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
-                        <td style={{ padding: '12px' }}>{user.username}</td>
-                        <td style={{ textAlign: 'right', padding: '12px' }}>{user.bookings}</td>
-                        <td style={{ textAlign: 'right', padding: '12px' }}>Rs. {user.total_spent}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </Box>
-            </Paper>
-          </Grid>
-        )}
       </Grid>
     </Container>
   );

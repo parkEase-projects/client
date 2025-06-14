@@ -15,9 +15,6 @@ import {
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import SecurityIcon from "@mui/icons-material/Security";
-import VideocamIcon from "@mui/icons-material/Videocam";
-import AssessmentIcon from "@mui/icons-material/Assessment";
 import { useNavigate } from "react-router-dom";
 import { fetchParkingAreas } from "../store/slices/parkingSlice";
 import { format, addDays } from "date-fns";
@@ -30,7 +27,6 @@ import ParkingAreaList from "../components/ParkingAreaList";
 const Home = () => {
   const dispatch = useDispatch();
   const { areas, loading, error } = useSelector((state) => state.parking);
-  const user = useSelector((state) => state.auth.user);
   const [selectedArea, setSelectedArea] = useState("");
   const [selectedDate, setSelectedDate] = useState(() => {
   return new Date().toISOString().split("T")[0];
@@ -90,59 +86,6 @@ const Home = () => {
 
   return (
     <div className="container mt-4">
-      {/* Role-based action buttons */}
-      {(user?.role === 'admin' || user?.role === 'security') && (
-        <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-          <Stack direction="row" spacing={2} justifyContent="center">
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<VideocamIcon />}
-              onClick={() => navigate('/camera-view')}
-            >
-              Camera Views
-            </Button>
-            
-            {user?.role === 'admin' && (
-              <>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  startIcon={<SecurityIcon />}
-                  onClick={() => navigate('/security-management')}
-                >
-                  Manage Security Staff
-                </Button>
-                <Button
-                  variant="contained"
-                  color="info"
-                  startIcon={<AssessmentIcon />}
-                  onClick={() => navigate('/reports')}
-                >
-                  View Reports
-                </Button>
-              </>
-            )}
-          </Stack>
-        </Paper>
-      )}
-
-      {/* Regular parker report button */}
-      {user?.role === 'parker' && (
-        <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-          <Stack direction="row" spacing={2} justifyContent="center">
-            <Button
-              variant="contained"
-              color="info"
-              startIcon={<AssessmentIcon />}
-              onClick={() => navigate('/reports')}
-            >
-              My Reports
-            </Button>
-          </Stack>
-        </Paper>
-      )}
-
       <h2 className="text-center mb-4">Parking Area Maps</h2>
       <SlotsCarousel/>      
 

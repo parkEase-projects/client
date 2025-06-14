@@ -16,11 +16,9 @@ import {
   DialogContent,
   DialogActions,
   Alert,
-  CircularProgress,
-  IconButton,
-  Badge
+  CircularProgress
 } from '@mui/material';
-import { Person, Edit, Delete, PhotoCamera } from '@mui/icons-material';
+import { Person, Edit, Delete } from '@mui/icons-material';
 import axios from 'axios';
 import { logout, updateProfile } from '../store/slices/authSlice';
 
@@ -30,7 +28,6 @@ const Profile = () => {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const fileInputRef = useRef();
 
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -49,30 +46,6 @@ const Profile = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('image', file);
-
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await axios.post(`${API_URL}/api/user/profile/image`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          // 'Authorization': `Bearer ${token}`
-        }
-      });
-      dispatch(updateProfile({ ...user, profile_image: response.data.profile_image }));
-      setSuccess('Profile image updated successfully');
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to upload image');
-    }
-    setLoading(false);
-  };
-
   const handleUpdate = async () => {
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords don't match");
@@ -82,14 +55,14 @@ const Profile = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.put(`${API_URL}/api/user/profile`, {
+      const response = await axios.put(`${API_URL}/api/auth/profile/update`, {
         username: user.username,
         email: formData.email,
         phoneNumber: formData.phoneNumber,
         password: formData.password || undefined
       });
       setSuccess('Profile updated successfully');
-      dispatch(updateProfile(response.data));
+      dispatch(updateProfile(response.data.user));
       setIsEditing(false);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to update profile');
@@ -117,40 +90,15 @@ const Profile = () => {
     <Container maxWidth="md">
       <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
         <Box display="flex" alignItems="center" mb={4}>
-          <input
-            type="file"
-            accept="image/*"
-            style={{ display: 'none' }}
-            ref={fileInputRef}
-            onChange={handleImageUpload}
-          />
-          <Badge
-            overlap="circular"
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            badgeContent={
-              <IconButton
-                sx={{
-                  bgcolor: 'primary.main',
-                  '&:hover': { bgcolor: 'primary.dark' },
-                  width: 32,
-                  height: 32
-                }}
-                onClick={() => fileInputRef.current.click()}
-              >
-                <PhotoCamera sx={{ color: 'white', fontSize: 20 }} />
-              </IconButton>
-            }
-          >
-            <Avatar
-              src={user?.profile_image ? `${API_URL}${user.profile_image}` : undefined}
-              sx={{ width: 80, height: 80, mr: 2, bgcolor: 'primary.main' }}
-            >
-              {!user?.profile_image && <Person sx={{ fontSize: 40 }} />}
-            </Avatar>
-          </Badge>
+          <Avatar sx={{ width: 80, height: 80, mr: 2, bgcolor: 'primary.main' }}>
+            <Person sx={{ fontSize: 40 }} />
+          </Avatar>
           <Box>
             <Typography variant="h4" gutterBottom>
               {user?.username}
+            </Typography>
+            <Typography variant="body1" color="textSecondary">
+              {user?.role}
             </Typography>
           </Box>
         </Box>
