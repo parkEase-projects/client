@@ -7,6 +7,8 @@ import {
   Typography,
   Link,
   IconButton,
+  Tooltip,
+  Divider,
 } from '@mui/material';
 import {
   Facebook,
@@ -22,103 +24,133 @@ const Footer = () => {
     <Box
       component="footer"
       sx={{
-        py: 3,
-        px: 2,
+        bgcolor: '#f5f5f5',
+        color: 'text.primary',
+        py: 6,
         mt: 'auto',
-        backgroundColor: (theme) =>
-          theme.palette.mode === 'light'
-            ? theme.palette.grey[200]
-            : theme.palette.grey[800],
+        borderTop: '1px solid #ddd',
       }}
     >
       <Container maxWidth="lg">
-        <Grid container spacing={4}>
-          <Grid item xs={12} sm={4}>
-            <Typography variant="h6" color="text.primary" gutterBottom>
+        <Grid container spacing={4} justifyContent="space-between">
+          {/* Brand Info and Social Icons */}
+          <Grid item xs={12} sm={6} md={3}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
               ParkEase
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Smart parking solutions for modern cities and businesses.
+              Smart Parking Solutions for a Better Future
             </Typography>
-            <Box sx={{ mt: 2 }}>
-              <IconButton color="primary" aria-label="Facebook">
-                <Facebook />
-              </IconButton>
-              <IconButton color="primary" aria-label="Twitter">
-                <Twitter />
-              </IconButton>
-              <IconButton color="primary" aria-label="Instagram">
-                <Instagram />
-              </IconButton>
+            <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+              <Tooltip title="Facebook - Coming Soon">
+                <IconButton sx={{ color: '#3b5998' }}>
+                  <Facebook />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Twitter - Coming Soon">
+                <IconButton sx={{ color: '#1DA1F2' }}>
+                  <Twitter />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Instagram - Coming Soon">
+                <IconButton
+                  sx={{
+                    color: '#E1306C',
+                    '&:hover': {
+                      color: '#C13584',
+                    },
+                  }}
+                >
+                  <Instagram />
+                </IconButton>
+              </Tooltip>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={4}>
-            <Typography variant="h6" color="text.primary" gutterBottom>
-              Quick Links
+
+          {/* Company Links */}
+          <Grid item xs={12} sm={6} md={3}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+              Company
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
               <Link
                 component={RouterLink}
-                to="/about"
-                color="inherit"
-                sx={{ mb: 1 }}
+                to="/about-us"
+                color="text.secondary"
+                sx={{ textDecoration: 'none', mb: 1, '&:hover': { color: 'primary.main' } }}
               >
                 About Us
               </Link>
               <Link
                 component={RouterLink}
-                to="/contact"
-                color="inherit"
-                sx={{ mb: 1 }}
+                to="/contact-us"
+                color="text.secondary"
+                sx={{ textDecoration: 'none', mb: 1, '&:hover': { color: 'primary.main' } }}
               >
-                Contact
+                Contact Us
               </Link>
+            </Box>
+          </Grid>
+
+          {/* Legal Links */}
+          <Grid item xs={12} sm={6} md={3}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+              Legal
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
               <Link
                 component={RouterLink}
-                to="/privacy"
-                color="inherit"
-                sx={{ mb: 1 }}
+                to="/privacy-policy"
+                color="text.secondary"
+                sx={{ textDecoration: 'none', mb: 1, '&:hover': { color: 'primary.main' } }}
               >
                 Privacy Policy
               </Link>
               <Link
                 component={RouterLink}
-                to="/terms"
-                color="inherit"
-                sx={{ mb: 1 }}
+                to="/terms-of-service"
+                color="text.secondary"
+                sx={{ textDecoration: 'none', mb: 1, '&:hover': { color: 'primary.main' } }}
               >
                 Terms of Service
               </Link>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={4}>
-            <Typography variant="h6" color="text.primary" gutterBottom>
-              Contact Us
+
+          {/* Contact Info */}
+          <Grid item xs={12} sm={6} md={3}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+              Contact
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <LocationOn sx={{ mr: 1 }} />
-              <Typography variant="body2">
-                123 Parking Street, City, Country
+              <LocationOn sx={{ mr: 1, color: 'primary.main' }} />
+              <Typography variant="body2" color="text.secondary">
+                123, ParkEase Lane, Colombo
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <Phone sx={{ mr: 1 }} />
-              <Typography variant="body2">+1 234 567 890</Typography>
+              <Phone sx={{ mr: 1, color: 'primary.main' }} />
+              <Typography variant="body2" color="text.secondary">
+                +1 234 567 890
+              </Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Email sx={{ mr: 1 }} />
-              <Typography variant="body2">info@parkease.com</Typography>
+              <Email sx={{ mr: 1, color: 'primary.main' }} />
+              <Typography variant="body2" color="text.secondary">
+                support@parkease.com
+              </Typography>
             </Box>
           </Grid>
         </Grid>
-        <Box sx={{ mt: 4, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
-            © {new Date().getFullYear()} ParkEase. All rights reserved.
-          </Typography>
-        </Box>
+
+        {/* Footer Bottom */}
+        <Divider sx={{ my: 4 }} />
+        <Typography variant="body2" color="text.secondary" align="center">
+          © {new Date().getFullYear()} ParkEase. All rights reserved.
+        </Typography>
       </Container>
     </Box>
   );
 };
 
-export default Footer; 
+export default Footer;

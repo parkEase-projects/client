@@ -299,7 +299,7 @@ const ViewBookings = () => {
                                     </Grid>
                                     <Grid item xs={12}>
                                         <Typography variant="subtitle1" gutterBottom>
-                                            Amount Paid: ₹{selectedBooking.amount}
+                                            Amount Paid: Rs. {selectedBooking.amount}
                                         </Typography>
                                     </Grid>
                                     <Grid item xs={12}>

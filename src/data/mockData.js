@@ -71,7 +71,7 @@ export const updateSlotStatus = (slotId, newStatus) => {
     return allSlots.find(s => s.id === slotId);
 };
 
-// Calculate booking amount (₹50 per hour)
+// Calculate booking amount (Rs. 50 per hour)
 export const calculateBookingAmount = (startTime, endTime) => {
     const start = new Date(startTime);
     const end = new Date(endTime);

@@ -375,7 +375,7 @@ const ParkingSlots = () => {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Typography variant="body1">
-                  Rate per hour: ₹{HOURLY_RATE}
+                  Rate per hour: Rs. {HOURLY_RATE}
                 </Typography>
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -396,7 +396,7 @@ const ParkingSlots = () => {
                     Total Amount:
                   </Typography>
                   <Typography variant="h6" color="primary">
-                    ₹{parkingFee}
+                    Rs. {parkingFee}
                   </Typography>
                 </Box>
               </Grid>
@@ -623,7 +623,7 @@ const ParkingSlots = () => {
               </Typography>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                 <Typography>Rate per hour:</Typography>
-                <Typography>₹{HOURLY_RATE}</Typography>
+                <Typography>Rs. {HOURLY_RATE}</Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                 <Typography>Duration:</Typography>
@@ -637,7 +637,7 @@ const ParkingSlots = () => {
                 borderTop: '1px dashed #bdbdbd'
               }}>
                 <Typography variant="h6">Total Amount:</Typography>
-                <Typography variant="h6" color="primary">₹{parkingFee}</Typography>
+                <Typography variant="h6" color="primary">Rs. {parkingFee}</Typography>
               </Box>
             </Box>
           </Box>
@@ -645,7 +645,7 @@ const ParkingSlots = () => {
         <DialogActions>
           <Button onClick={handleDialogClose} color="secondary">Cancel</Button>
           <Button onClick={handleBookingConfirm} color="primary" variant="contained">
-            Confirm & Pay ₹{parkingFee}
+            Confirm & Pay Rs. {parkingFee}
           </Button>
         </DialogActions>
       </Dialog>

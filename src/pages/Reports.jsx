@@ -35,7 +35,7 @@ const Reports = () => {
   useEffect(() => {
     const allBookings = getBookings();
     setBookings(allBookings);
-    
+
     // Process data for different charts
     processMonthlyData(allBookings);
     processAreaUsageData(allBookings);
@@ -105,7 +105,7 @@ const Reports = () => {
     const totalBookings = bookings.length;
     const totalRevenue = bookings.reduce((sum, booking) => sum + (booking.amount || 0), 0);
     const averageBookingValue = totalBookings ? (totalRevenue / totalBookings).toFixed(2) : 0;
-    
+
     return {
       totalBookings,
       totalRevenue,
