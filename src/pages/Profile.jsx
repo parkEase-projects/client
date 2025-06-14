@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -18,9 +18,12 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material';
+import { Person, Edit, Delete, Lock } from '@mui/icons-material';
 import { Person, Edit, Delete } from '@mui/icons-material';
 import axios from 'axios';
 import { logout, updateProfile } from '../store/slices/authSlice';
+import ChangePasswordDialog from '../components/ChangePasswordDialog';
+import { validateEmail, validatePhone, validatePassword, validatePasswordMatch } from '../utils/validation';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -31,14 +34,19 @@ const Profile = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   
   const [formData, setFormData] = useState({
     email: user?.email || '',
-    phoneNumber: user?.phoneNumber || '',
-    password: '',
+    phoneNumber: user?.phoneNumber || ''
+  });
+
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
     confirmPassword: ''
   });
 
@@ -46,9 +54,52 @@ const Profile = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handlePasswordChange = (e) => {
+    setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
+  };
+
+  const handlePasswordUpdate = async () => {
+    // Validate passwords
+    const passwordError = validatePassword(passwordData.newPassword);
+    const confirmPasswordError = validatePasswordMatch(passwordData.newPassword, passwordData.confirmPassword);
+
+    if (passwordError || confirmPasswordError) {
+      setError(passwordError || confirmPasswordError); // Show the first error found
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setError("New passwords don't match");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      await axios.put(`${API_URL}/api/auth/profile/update`, {
+        username: user.username,
+        password: passwordData.newPassword
+      });
+      setSuccess('Password updated successfully');
+      setShowPasswordDialog(false);
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to update password');
+    }
+    setLoading(false);
+  };
+
   const handleUpdate = async () => {
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords don't match");
+    // Validate fields
+    const emailError = validateEmail(formData.email);
+    const phoneError = validatePhone(formData.phoneNumber);
+
+    if (emailError || phoneError) {
+      setError(emailError || phoneError); // Show the first error found
       return;
     }
 
@@ -58,8 +109,7 @@ const Profile = () => {
       const response = await axios.put(`${API_URL}/api/auth/profile/update`, {
         username: user.username,
         email: formData.email,
-        phoneNumber: formData.phoneNumber,
-        password: formData.password || undefined
+        phoneNumber: formData.phoneNumber
       });
       setSuccess('Profile updated successfully');
       dispatch(updateProfile(response.data.user));
@@ -90,6 +140,11 @@ const Profile = () => {
     <Container maxWidth="md">
       <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
         <Box display="flex" alignItems="center" mb={4}>
+          <Avatar
+            sx={{ width: 80, height: 80, mr: 2, bgcolor: 'primary.main' }}
+          >
+            <Person sx={{ fontSize: 40 }} />
+          </Avatar>
           <Avatar sx={{ width: 80, height: 80, mr: 2, bgcolor: 'primary.main' }}>
             <Person sx={{ fontSize: 40 }} />
           </Avatar>
@@ -148,45 +203,30 @@ const Profile = () => {
               variant="outlined"
             />
           </Grid>
-          {isEditing && (
-            <>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="New Password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  variant="outlined"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Confirm New Password"
-                  name="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  variant="outlined"
-                />
-              </Grid>
-            </>
-          )}
         </Grid>
 
         <Box mt={4} display="flex" justifyContent="space-between">
           <Box>
             {!isEditing ? (
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<Edit />}
-                onClick={() => setIsEditing(true)}
-              >
-                Edit Profile
-              </Button>
+              <>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<Edit />}
+                  onClick={() => setIsEditing(true)}
+                  sx={{ mr: 2 }}
+                >
+                  Edit Profile
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<Lock />}
+                  onClick={() => setShowPasswordDialog(true)}
+                >
+                  Change Password
+                </Button>
+              </>
             ) : (
               <>
                 <Button
@@ -196,12 +236,17 @@ const Profile = () => {
                   disabled={loading}
                   sx={{ mr: 2 }}
                 >
-                  {loading ? <CircularProgress size={24} /> : 'Save Changes'}
+                  Save Changes
                 </Button>
                 <Button
                   variant="outlined"
-                  onClick={() => setIsEditing(false)}
-                  disabled={loading}
+                  onClick={() => {
+                    setIsEditing(false);
+                    setFormData({
+                      email: user?.email || '',
+                      phoneNumber: user?.phoneNumber || ''
+                    });
+                  }}
                 >
                   Cancel
                 </Button>
@@ -209,7 +254,7 @@ const Profile = () => {
             )}
           </Box>
           <Button
-            variant="contained"
+            variant="outlined"
             color="error"
             startIcon={<Delete />}
             onClick={() => setShowDeleteDialog(true)}
@@ -229,16 +274,29 @@ const Profile = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
-          <Button
-            onClick={handleDelete}
-            color="error"
-            variant="contained"
-            disabled={loading}
-          >
-            {loading ? <CircularProgress size={24} /> : 'Delete Account'}
+          <Button onClick={handleDelete} color="error" disabled={loading}>
+            {loading ? 'Deleting...' : 'Delete Account'}
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Change Password Dialog */}
+      <ChangePasswordDialog
+        open={showPasswordDialog}
+        onClose={() => {
+          setShowPasswordDialog(false);
+          setPasswordData({
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+          });
+        }}
+        onChange={handlePasswordChange}
+        onSubmit={handlePasswordUpdate}
+        data={passwordData}
+        loading={loading}
+        error={error}
+      />
     </Container>
   );
 };
