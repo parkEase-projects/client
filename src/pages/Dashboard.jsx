@@ -277,6 +277,7 @@ const Dashboard = () => {
               )}
             </List>
           </Paper>
+
         </Grid>
 
         {/* Right Column: Recent Bookings */}

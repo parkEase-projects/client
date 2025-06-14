@@ -31,7 +31,6 @@ import ParkingAreaList from "../components/ParkingAreaList";
 const Home = () => {
   const dispatch = useDispatch();
   const { areas, loading, error } = useSelector((state) => state.parking);
-  const user = useSelector((state) => state.auth.user);
   const [selectedArea, setSelectedArea] = useState("");
   const [selectedDate, setSelectedDate] = useState(() => {
     return new Date().toISOString().split("T")[0];
@@ -91,6 +90,7 @@ const Home = () => {
 
   return (
     <div className="container mt-4">
+    
       {/* Role-based action buttons */}
       {/* Removed Manage Security Staff button as it should only appear in the Dashboard */}
 

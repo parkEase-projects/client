@@ -39,7 +39,7 @@ const ProtectedRoute = ({ children }) => {
 // Public Route Component (redirects to dashboard if authenticated)
 const PublicRoute = ({ children }) => {
   const isAuthenticated = store.getState().auth.isAuthenticated;
-  return !isAuthenticated ? children : <Navigate to="/dashboard" />;
+  return isAuthenticated ? <Navigate to="/dashboard" /> : children;
 };
 
 // Create theme

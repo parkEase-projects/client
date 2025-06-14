@@ -15,7 +15,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Alert
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import { Person, Edit, Delete, Lock } from '@mui/icons-material';
 import axios from 'axios';
@@ -36,7 +37,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  
+
   const [formData, setFormData] = useState({
     email: user?.email || '',
     phoneNumber: user?.phoneNumber || ''
@@ -57,12 +58,11 @@ const Profile = () => {
   };
 
   const handlePasswordUpdate = async () => {
-    // Validate passwords
     const passwordError = validatePassword(passwordData.newPassword);
     const confirmPasswordError = validatePasswordMatch(passwordData.newPassword, passwordData.confirmPassword);
 
     if (passwordError || confirmPasswordError) {
-      setError(passwordError || confirmPasswordError); // Show the first error found
+      setError(passwordError || confirmPasswordError);
       return;
     }
 
@@ -92,12 +92,11 @@ const Profile = () => {
   };
 
   const handleUpdate = async () => {
-    // Validate fields
     const emailError = validateEmail(formData.email);
     const phoneError = validatePhone(formData.phoneNumber);
 
     if (emailError || phoneError) {
-      setError(emailError || phoneError); // Show the first error found
+      setError(emailError || phoneError);
       return;
     }
 
@@ -111,10 +110,6 @@ const Profile = () => {
       });
       setSuccess('Profile updated successfully');
       dispatch(updateProfile(response.data.user));
-      setFormData({
-        email: response.data.user.email,
-        phoneNumber: response.data.user.phoneNumber
-      });
       setIsEditing(false);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to update profile');
@@ -142,14 +137,15 @@ const Profile = () => {
     <Container maxWidth="md">
       <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
         <Box display="flex" alignItems="center" mb={4}>
-          <Avatar
-            sx={{ width: 80, height: 80, mr: 2, bgcolor: 'primary.main' }}
-          >
+          <Avatar sx={{ width: 80, height: 80, mr: 2, bgcolor: 'primary.main' }}>
             <Person sx={{ fontSize: 40 }} />
           </Avatar>
           <Box>
             <Typography variant="h4" gutterBottom>
               {user?.username}
+            </Typography>
+            <Typography variant="body1" color="textSecondary">
+              {user?.role}
             </Typography>
           </Box>
         </Box>
@@ -260,7 +256,6 @@ const Profile = () => {
         </Box>
       </Paper>
 
-      {/* Delete Account Dialog */}
       <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
         <DialogTitle>Delete Account</DialogTitle>
         <DialogContent>
@@ -276,7 +271,6 @@ const Profile = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Change Password Dialog */}
       <ChangePasswordDialog
         open={showPasswordDialog}
         onClose={() => {
@@ -297,4 +291,4 @@ const Profile = () => {
   );
 };
 
-export default Profile; 
+export default Profile;
