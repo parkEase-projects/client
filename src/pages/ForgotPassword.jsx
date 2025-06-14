@@ -14,6 +14,8 @@ import {
   CircularProgress
 } from '@mui/material';
 import axios from 'axios';
+import PasswordField from '../components/PasswordField';
+import { validateEmail, validatePassword, validatePasswordMatch } from '../utils/validation';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -30,10 +32,16 @@ const ForgotPassword = () => {
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [formErrors, setFormErrors] = useState({
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
 
   const handleSendOTP = async () => {
-    if (!email) {
-      setError('Please enter your email');
+    const emailError = validateEmail(email);
+    if (emailError) {
+      setFormErrors(prev => ({ ...prev, email: emailError }));
       return;
     }
 
@@ -68,13 +76,14 @@ const ForgotPassword = () => {
   };
 
   const handleResetPassword = async () => {
-    if (!password || !confirmPassword) {
-      setError('Please fill in all fields');
-      return;
-    }
+    const passwordError = validatePassword(password);
+    const confirmPasswordError = validatePasswordMatch(password, confirmPassword);
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
+    if (passwordError || confirmPasswordError) {
+      setFormErrors({
+        password: passwordError,
+        confirmPassword: confirmPasswordError
+      });
       return;
     }
 
@@ -93,6 +102,34 @@ const ForgotPassword = () => {
     setLoading(false);
   };
 
+  const handleEmailChange = (e) => {
+    const value = e.target.value;
+    setEmail(value);
+    setFormErrors(prev => ({
+      ...prev,
+      email: validateEmail(value)
+    }));
+  };
+
+  const handlePasswordChange = (e) => {
+    const value = e.target.value;
+    setPassword(value);
+    setFormErrors(prev => ({
+      ...prev,
+      password: validatePassword(value),
+      confirmPassword: confirmPassword ? validatePasswordMatch(value, confirmPassword) : ''
+    }));
+  };
+
+  const handleConfirmPasswordChange = (e) => {
+    const value = e.target.value;
+    setConfirmPassword(value);
+    setFormErrors(prev => ({
+      ...prev,
+      confirmPassword: validatePasswordMatch(password, value)
+    }));
+  };
+
   const renderStepContent = (step) => {
     switch (step) {
       case 0:
@@ -106,14 +143,16 @@ const ForgotPassword = () => {
               label="Email"
               variant="outlined"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
               disabled={loading}
+              error={!!formErrors.email}
+              helperText={formErrors.email}
             />
             <Button
               fullWidth
               variant="contained"
               onClick={handleSendOTP}
-              disabled={loading}
+              disabled={loading || !!formErrors.email}
               sx={{ mt: 2 }}
             >
               {loading ? <CircularProgress size={24} /> : 'Send OTP'}
@@ -162,30 +201,32 @@ const ForgotPassword = () => {
             <Typography variant="body1" mb={2}>
               Enter your new password.
             </Typography>
-            <TextField
+            <PasswordField
               fullWidth
-              type="password"
               label="New Password"
               variant="outlined"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handlePasswordChange}
               disabled={loading}
+              error={!!formErrors.password}
+              helperText={formErrors.password}
               sx={{ mb: 2 }}
             />
-            <TextField
+            <PasswordField
               fullWidth
-              type="password"
               label="Confirm New Password"
               variant="outlined"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={handleConfirmPasswordChange}
               disabled={loading}
+              error={!!formErrors.confirmPassword}
+              helperText={formErrors.confirmPassword}
             />
             <Button
               fullWidth
               variant="contained"
               onClick={handleResetPassword}
-              disabled={loading}
+              disabled={loading || !!formErrors.password || !!formErrors.confirmPassword}
               sx={{ mt: 2 }}
             >
               {loading ? <CircularProgress size={24} /> : 'Reset Password'}

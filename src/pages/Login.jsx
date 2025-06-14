@@ -13,6 +13,8 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { login, clearError } from '../store/slices/authSlice';
 import BackgroundLogo from '../images/bg-img.png';
+import PasswordField from '../components/PasswordField';
+import { validateEmail } from '../utils/validation';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -26,9 +28,7 @@ const Login = () => {
     email: '',
     password: ''
   });
-
-  // Email validation regex
-  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -55,52 +55,25 @@ const Login = () => {
     }
   }, [error]);
 
-  const validateEmail = (email) => {
-    if (!emailRegex.test(email)) {
-      return 'Please enter a valid email address';
-    }
-    return '';
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-
-    // Clear errors when user starts typing
-    setFormErrors(prev => ({
-      ...prev,
-      [name]: ''
-    }));
-
-    // Clear the general error when user starts typing
     if (error) {
       dispatch(clearError());
     }
-
-    // Validate email format while typing
-    if (name === 'email') {
-      const emailError = validateEmail(value);
-      setFormErrors(prev => ({
-        ...prev,
-        email: emailError
-      }));
-    }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Validate email before submission
-    const emailError = validateEmail(formData.email);
-    if (emailError) {
-      setFormErrors(prev => ({
-        ...prev,
-        email: emailError
-      }));
-      return;
+    setSubmitted(true);
+    // Run validation
+    const errors = {};
+    errors.email = validateEmail(formData.email);
+    setFormErrors(errors);
+    // If no errors, proceed
+    if (!Object.values(errors).some(Boolean)) {
+      dispatch(login(formData));
     }
-
-    dispatch(login(formData));
   };
 
   return (
@@ -183,22 +156,21 @@ const Login = () => {
                 autoFocus
                 value={formData.email}
                 onChange={handleChange}
-                error={!!formErrors.email}
-                helperText={formErrors.email}
+                error={submitted && !!formErrors.email}
+                helperText={submitted ? formErrors.email : ''}
               />
-              <TextField
+              <PasswordField
                 margin="normal"
                 required
                 fullWidth
                 name="password"
                 label="Password"
-                type="password"
                 id="password"
                 autoComplete="current-password"
                 value={formData.password}
                 onChange={handleChange}
-                error={!!formErrors.password}
-                helperText={formErrors.password}
+                error={submitted && !!formErrors.password}
+                helperText={submitted ? formErrors.password : ''}
               />
               <Button
                 type="submit"

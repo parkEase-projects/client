@@ -15,6 +15,8 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { register, clearError, logout } from '../store/slices/authSlice';
 import BackgroundLogo from '../images/bg-img.png';
+import PasswordField from '../components/PasswordField';
+import { validateForm, validateEmail, validatePhone, validatePassword, validatePasswordMatch, validateUsername } from '../utils/validation';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -28,38 +30,15 @@ const Register = () => {
     confirmPassword: '',
     role: 'parker',
   });
-  const [passwordError, setPasswordError] = useState('');
-  const [successOpen, setSuccessOpen] = useState(false);
   const [formErrors, setFormErrors] = useState({
     username: '',
     email: '',
-    phoneNumber: ''
+    phoneNumber: '',
+    password: '',
+    confirmPassword: ''
   });
-
-  // Email validation regex
-  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-  
-  // Phone number validation regex
-  const phoneRegex = /^\d{10}$/;
-
-  const validateField = (name, value) => {
-    let error = '';
-    switch (name) {
-      case 'email':
-        if (!emailRegex.test(value)) {
-          error = 'Please enter a valid email address';
-        }
-        break;
-      case 'phoneNumber':
-        if (!phoneRegex.test(value)) {
-          error = 'Phone number must be exactly 10 digits';
-        }
-        break;
-      default:
-        break;
-    }
-    return error;
-  };
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -91,74 +70,24 @@ const Register = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // Clear the specific field error when user starts typing
-    setFormErrors(prev => ({
-      ...prev,
-      [name]: ''
-    }));
-    
-    // Clear the general error when user starts typing
-    if (error) {
-      dispatch(clearError());
-    }
-    
     setFormData({ ...formData, [name]: value });
-
-    // Password match validation only if both passwords have been entered
-    if (name === 'password' || name === 'confirmPassword') {
-      if (name === 'password') {
-        // Only check match if confirmPassword has a value
-        if (formData.confirmPassword) {
-          if (value !== formData.confirmPassword) {
-            setPasswordError('Passwords do not match');
-          } else {
-            setPasswordError('');
-          }
-        }
-      } else if (name === 'confirmPassword') {
-        // Only check match if both passwords have values
-        if (value && formData.password) {
-          if (value !== formData.password) {
-            setPasswordError('Passwords do not match');
-          } else {
-            setPasswordError('');
-          }
-        }
-      }
-    }
-
-    // Field-specific validation
-    const fieldError = validateField(name, value);
-    setFormErrors(prev => ({
-      ...prev,
-      [name]: fieldError
-    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Validate all fields before submission
-    const emailError = validateField('email', formData.email);
-    const phoneError = validateField('phoneNumber', formData.phoneNumber);
-
-    // Check password match on submission
-    if (formData.password !== formData.confirmPassword) {
-      setPasswordError('Passwords do not match');
-      return;
+    setSubmitted(true);
+    // Run validation
+    const errors = {};
+    errors.username = validateUsername(formData.username);
+    errors.email = validateEmail(formData.email);
+    errors.phoneNumber = validatePhone(formData.phoneNumber);
+    errors.password = validatePassword(formData.password);
+    errors.confirmPassword = validatePasswordMatch(formData.password, formData.confirmPassword);
+    setFormErrors(errors);
+    // If no errors, proceed
+    if (!Object.values(errors).some(Boolean)) {
+      dispatch(register(formData));
     }
-
-    setFormErrors({
-      ...formErrors,
-      email: emailError,
-      phoneNumber: phoneError
-    });
-
-    if (emailError || phoneError || passwordError) {
-      return;
-    }
-
-    dispatch(register(formData));
   };
 
   return (
@@ -231,11 +160,6 @@ const Register = () => {
                 {formErrors.username || formErrors.email}
               </Alert>
             )}
-            {passwordError && (
-              <Alert severity="error" sx={{ width: '100%', mt: 2 }}>
-                {passwordError}
-              </Alert>
-            )}
             <Box
               component="form"
               onSubmit={handleSubmit}
@@ -249,11 +173,10 @@ const Register = () => {
                 label="Username"
                 name="username"
                 autoComplete="username"
-                autoFocus
                 value={formData.username}
                 onChange={handleChange}
-                error={!!formErrors.username}
-                helperText={formErrors.username}
+                error={submitted && !!formErrors.username}
+                helperText={submitted ? formErrors.username : ''}
               />
               <TextField
                 margin="normal"
@@ -265,8 +188,8 @@ const Register = () => {
                 autoComplete="email"
                 value={formData.email}
                 onChange={handleChange}
-                error={!!formErrors.email}
-                helperText={formErrors.email}
+                error={submitted && !!formErrors.email}
+                helperText={submitted ? formErrors.email : ''}
               />
               <TextField
                 margin="normal"
@@ -275,62 +198,58 @@ const Register = () => {
                 id="phoneNumber"
                 label="Phone Number"
                 name="phoneNumber"
-                autoComplete="tel"
                 value={formData.phoneNumber}
                 onChange={handleChange}
-                error={!!formErrors.phoneNumber}
-                helperText={formErrors.phoneNumber}
+                error={submitted && !!formErrors.phoneNumber}
+                helperText={submitted ? formErrors.phoneNumber : ''}
               />
-              <TextField
+              <PasswordField
                 margin="normal"
                 required
                 fullWidth
                 name="password"
                 label="Password"
-                type="password"
                 id="password"
-                autoComplete="new-password"
                 value={formData.password}
                 onChange={handleChange}
+                error={submitted && !!formErrors.password}
+                helperText={submitted ? formErrors.password : ''}
               />
-              <TextField
+              <PasswordField
                 margin="normal"
                 required
                 fullWidth
                 name="confirmPassword"
                 label="Confirm Password"
-                type="password"
                 id="confirmPassword"
-                autoComplete="new-password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                error={submitted && !!formErrors.confirmPassword}
+                helperText={submitted ? formErrors.confirmPassword : ''}
               />
-              
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
                 sx={{ mt: 3, mb: 2 }}
-                disabled={loading || !!passwordError}
+                disabled={loading}
               >
                 {loading ? 'Registering...' : 'Register'}
               </Button>
               <Box sx={{ textAlign: 'center' }}>
                 <Link component={RouterLink} to="/login" variant="body2">
-                  {"Already have an account? Sign In"}
+                  Already have an account? Sign in
                 </Link>
               </Box>
             </Box>
           </Paper>
-          <Snackbar open={successOpen} autoHideDuration={2000} onClose={() => setSuccessOpen(false)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-            <Alert onClose={() => setSuccessOpen(false)} severity="success" sx={{ width: '100%' }}>
-              Registration successful!
-            </Alert>
-          </Snackbar>
         </Box>
       </Container>
-
-      
+      <Snackbar
+        open={successOpen}
+        autoHideDuration={2000}
+        message="Registration successful! Redirecting to login..."
+      />
     </Box>
   );
 };
