@@ -48,4 +48,16 @@ input[type="date"]::before {
     position: absolute;
     color: #999;
     pointer-events: none;
+}
+
+/* Ensure caret and focus ring are visible for all input fields */
+input, textarea {
+  caret-color: auto !important;
+  outline: 2px solid #1976d2 !important;
+  outline-offset: 0px;
+}
+
+input:focus, textarea:focus {
+  outline: 2px solid #1976d2 !important;
+  caret-color: auto !important;
 } 

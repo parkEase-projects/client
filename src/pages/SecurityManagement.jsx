@@ -1,147 +1,175 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
+import React, { useState } from 'react';
+import {
+  Container,
+  Paper,
+  Typography,
+  Box,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Alert,
+} from '@mui/material';
+import { Delete, Add } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
 
 const SecurityManagement = () => {
-  const [securityStaff, setSecurityStaff] = useState([]);
+  const user = useSelector(state => state.auth.user);
   const [openDialog, setOpenDialog] = useState(false);
-  const [newSecurity, setNewSecurity] = useState({
-    username: '',
+  const [newStaff, setNewStaff] = useState({
+    name: '',
     email: '',
-    phone_number: '',
-    password: ''
+    phone: '',
   });
-  const token = useSelector((state) => state.auth.token);
+  const [staffList, setStaffList] = useState([
+    { id: 1, name: 'John Doe', email: 'john@example.com', phone: '1234567890' },
+    { id: 2, name: 'Jane Smith', email: 'jane@example.com', phone: '0987654321' },
+  ]);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    fetchSecurityStaff();
-  }, []);
-
-  const fetchSecurityStaff = async () => {
-    try {
-      const response = await axios.get('/api/auth/security-staff', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setSecurityStaff(response.data);
-    } catch (error) {
-      console.error('Error fetching security staff:', error);
-    }
+  const validateEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+  const validatePhone = (phone) => {
+    return /^\d{10}$/.test(phone);
   };
 
-  const handleAddSecurity = async () => {
-    try {
-      await axios.post('/api/auth/add-security', newSecurity, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setOpenDialog(false);
-      fetchSecurityStaff();
-      setNewSecurity({ username: '', email: '', phone_number: '', password: '' });
-    } catch (error) {
-      console.error('Error adding security staff:', error);
+  const handleAddStaff = () => {
+    if (!newStaff.name || !newStaff.email || !newStaff.phone) {
+      setError("All fields are required.");
+      return;
     }
+    if (!validateEmail(newStaff.email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (!validatePhone(newStaff.phone)) {
+      setError("Please enter a valid 10-digit phone number.");
+      return;
+    }
+    setStaffList([
+      ...staffList,
+      {
+        id: staffList.length + 1,
+        ...newStaff,
+      },
+    ]);
+    setNewStaff({ name: '', email: '', phone: '' });
+    setOpenDialog(false);
+    setError("");
   };
 
-  const handleToggleActive = async (id, currentStatus) => {
-    try {
-      await axios.patch(`/api/auth/toggle-security/${id}`, 
-        { is_active: !currentStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      fetchSecurityStaff();
-    } catch (error) {
-      console.error('Error toggling security status:', error);
-    }
+  const handleRemoveStaff = (id) => {
+    setStaffList(staffList.filter(staff => staff.id !== id));
   };
+
+  if (user?.role !== 'admin') {
+    return (
+      <Container>
+        <Alert severity="error" sx={{ mt: 4 }}>
+          You don't have permission to access this page.
+        </Alert>
+      </Container>
+    );
+  }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Security Staff Management
-      </Typography>
-      
-      <Button 
-        variant="contained" 
-        color="primary" 
-        onClick={() => setOpenDialog(true)}
-        sx={{ mb: 3 }}
+    <Container maxWidth="lg" sx={{ mt: 6, mb: 6 }}>
+      <Paper 
+        elevation={3} 
+        sx={{ 
+          p: 4, 
+          borderRadius: 2,
+          background: 'linear-gradient(145deg, #ffffff 0%, #f5f5f5 100%)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
+        }}
       >
-        Add New Security Staff
-      </Button>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+          <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
+            Security Staff Management
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => setOpenDialog(true)}
+          >
+            Add Staff
+          </Button>
+        </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Username</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Phone Number</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {securityStaff.map((staff) => (
-              <TableRow key={staff.id}>
-                <TableCell>{staff.username}</TableCell>
-                <TableCell>{staff.email}</TableCell>
-                <TableCell>{staff.phone_number}</TableCell>
-                <TableCell>{staff.is_active ? 'Active' : 'Inactive'}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="outlined"
-                    color={staff.is_active ? 'error' : 'success'}
-                    onClick={() => handleToggleActive(staff.id, staff.is_active)}
-                  >
-                    {staff.is_active ? 'Deactivate' : 'Activate'}
-                  </Button>
-                </TableCell>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Phone</TableCell>
+                <TableCell align="right">Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {staffList.map((staff) => (
+                <TableRow key={staff.id}>
+                  <TableCell>{staff.name}</TableCell>
+                  <TableCell>{staff.email}</TableCell>
+                  <TableCell>{staff.phone}</TableCell>
+                  <TableCell align="right">
+                    <IconButton
+                      color="error"
+                      onClick={() => handleRemoveStaff(staff.id)}
+                    >
+                      <Delete />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>Add New Security Staff</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Username"
-            fullWidth
-            value={newSecurity.username}
-            onChange={(e) => setNewSecurity({ ...newSecurity, username: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Email"
-            type="email"
-            fullWidth
-            value={newSecurity.email}
-            onChange={(e) => setNewSecurity({ ...newSecurity, email: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Phone Number"
-            fullWidth
-            value={newSecurity.phone_number}
-            onChange={(e) => setNewSecurity({ ...newSecurity, phone_number: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Password"
-            type="password"
-            fullWidth
-            value={newSecurity.password}
-            onChange={(e) => setNewSecurity({ ...newSecurity, password: e.target.value })}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <Button onClick={handleAddSecurity} variant="contained">Add</Button>
-        </DialogActions>
-      </Dialog>
+        <Dialog open={openDialog} onClose={() => { setOpenDialog(false); setError(""); }}>
+          <DialogTitle>Add New Security Staff</DialogTitle>
+          <DialogContent>
+            <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {error && <Alert severity="error">{error}</Alert>}
+              <TextField
+                label="Name"
+                fullWidth
+                value={newStaff.name}
+                onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
+              />
+              <TextField
+                label="Email"
+                fullWidth
+                type="email"
+                value={newStaff.email}
+                onChange={(e) => setNewStaff({ ...newStaff, email: e.target.value })}
+              />
+              <TextField
+                label="Phone"
+                fullWidth
+                value={newStaff.phone}
+                onChange={(e) => setNewStaff({ ...newStaff, phone: e.target.value })}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+            <Button onClick={handleAddStaff} variant="contained">
+              Add Staff
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Paper>
     </Container>
   );
 };

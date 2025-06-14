@@ -13,8 +13,12 @@ import {
   CircularProgress,
   Alert,
   Typography,
+  Stack,
+  Button,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import SecurityIcon from "@mui/icons-material/Security";
+import VideocamIcon from "@mui/icons-material/Videocam";
 import { useNavigate } from "react-router-dom";
 import { fetchParkingAreas } from "../store/slices/parkingSlice";
 import { format, addDays } from "date-fns";
@@ -29,7 +33,7 @@ const Home = () => {
   const { areas, loading, error } = useSelector((state) => state.parking);
   const [selectedArea, setSelectedArea] = useState("");
   const [selectedDate, setSelectedDate] = useState(() => {
-  return new Date().toISOString().split("T")[0];
+    return new Date().toISOString().split("T")[0];
   });
   const [selectedTime, setSelectedTime] = useState("");
   const navigate = useNavigate();
@@ -86,6 +90,10 @@ const Home = () => {
 
   return (
     <div className="container mt-4">
+    
+      {/* Role-based action buttons */}
+      {/* Removed Manage Security Staff button as it should only appear in the Dashboard */}
+
       <h2 className="text-center mb-4">Parking Area Maps</h2>
       <SlotsCarousel/>      
 
@@ -171,7 +179,6 @@ const Home = () => {
             item
             xs={2}
             md={1}
-            
           >
             <IconButton
               color="primary"
