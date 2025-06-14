@@ -76,6 +76,42 @@ const Dashboard = () => {
       .slice(0, 3);
   };
 
+  // Determine how many quick action buttons to show
+  const quickActions = [
+    {
+      label: 'Book Parking',
+      icon: <DirectionsCar />,
+      color: 'primary',
+      onClick: () => navigate('/booking'),
+      show: true,
+    },
+    {
+      label: 'View Bookings',
+      icon: <AccessTime />,
+      color: 'secondary',
+      onClick: () => navigate('/view-bookings'),
+      show: true,
+    },
+    {
+      label: 'Camera Views',
+      icon: <Videocam />,
+      color: 'info',
+      onClick: () => navigate('/camera-view'),
+      show: user?.role === 'admin' || user?.role === 'security',
+    },
+    {
+      label: 'Manage Security Staff',
+      icon: <Security />,
+      color: 'success',
+      onClick: () => navigate('/security-management'),
+      show: user?.role === 'admin',
+    },
+  ];
+  const visibleActions = quickActions.filter(action => action.show);
+  let gridMd = 3;
+  if (visibleActions.length === 2) gridMd = 6;
+  else if (visibleActions.length === 3) gridMd = 4;
+
   return (
     <Container maxWidth="lg" sx={{ mt: 6, mb: 6 }}>
       <Grid container spacing={4}>
@@ -99,101 +135,102 @@ const Dashboard = () => {
           </Paper>
         </Grid>
 
-        {/* Quick Stats */}
-        <Grid item xs={12} md={4}>
-          <Card 
-            sx={{ 
-              height: '100%',
-              borderRadius: 2,
-              transition: 'transform 0.2s ease-in-out',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-              }
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <DirectionsCar sx={{ mr: 2, color: 'primary.main', fontSize: 32 }} />
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>Past Bookings</Typography>
-              </Box>
-              <Typography variant="h3" color="primary.main" sx={{ fontWeight: 700, mb: 2 }}>
-                {getPastBookings().length}
-              </Typography>
-            </CardContent>
-            <CardActions sx={{ p: 2, pt: 0 }}>
-              <Button
-                size="small"
-                onClick={() => navigate('/view-bookings', { state: { bookingType: 'past' } })}
+        {/* Quick Stats - Grouped in a single responsive row */}
+        <Grid item xs={12}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={4}>
+              <Card 
                 sx={{ 
-                  textTransform: 'none',
-                  fontWeight: 500
+                  height: '100%',
+                  borderRadius: 3,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
+                  transition: 'transform 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
+                  }
                 }}
               >
-                View Details
-              </Button>
-            </CardActions>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card 
-            sx={{ 
-              height: '100%',
-              borderRadius: 2,
-              transition: 'transform 0.2s ease-in-out',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-              }
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <AccessTime sx={{ mr: 2, color: 'success.main', fontSize: 32 }} />
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>Upcoming Bookings</Typography>
-              </Box>
-              <Typography variant="h3" color="success.main" sx={{ fontWeight: 700, mb: 2 }}>
-                {getUpcomingBookings().length}
-              </Typography>
-            </CardContent>
-            <CardActions sx={{ p: 2, pt: 0 }}>
-              <Button
-                size="small"
-                onClick={() => navigate('/view-bookings', { state: { bookingType: 'upcoming' } })}
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <DirectionsCar sx={{ mr: 2, color: 'primary.main', fontSize: 32 }} />
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>Past Bookings</Typography>
+                  </Box>
+                  <Typography variant="h3" color="primary.main" sx={{ fontWeight: 700, mb: 2 }}>
+                    {getPastBookings().length}
+                  </Typography>
+                </CardContent>
+                <CardActions sx={{ p: 2, pt: 0 }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => navigate('/view-bookings', { state: { bookingType: 'past' } })}
+                    sx={{ textTransform: 'none', fontWeight: 500, borderRadius: 2 }}
+                  >
+                    View Details
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card 
                 sx={{ 
-                  textTransform: 'none',
-                  fontWeight: 500
+                  height: '100%',
+                  borderRadius: 3,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
+                  transition: 'transform 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
+                  }
                 }}
               >
-                View Details
-              </Button>
-            </CardActions>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card 
-            sx={{ 
-              height: '100%',
-              borderRadius: 2,
-              transition: 'transform 0.2s ease-in-out',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-              }
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Payment sx={{ mr: 2, color: 'secondary.main', fontSize: 32 }} />
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>Total Spent</Typography>
-              </Box>
-              <Typography variant="h3" color="secondary.main" sx={{ fontWeight: 700, mb: 2 }}>
-                Rs. {getTotalSpent()}
-              </Typography>
-            </CardContent>
-          </Card>
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <AccessTime sx={{ mr: 2, color: 'success.main', fontSize: 32 }} />
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>Upcoming Bookings</Typography>
+                  </Box>
+                  <Typography variant="h3" color="success.main" sx={{ fontWeight: 700, mb: 2 }}>
+                    {getUpcomingBookings().length}
+                  </Typography>
+                </CardContent>
+                <CardActions sx={{ p: 2, pt: 0 }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => navigate('/view-bookings', { state: { bookingType: 'upcoming' } })}
+                    sx={{ textTransform: 'none', fontWeight: 500, borderRadius: 2 }}
+                  >
+                    View Details
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card 
+                sx={{ 
+                  height: '100%',
+                  borderRadius: 3,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
+                  transition: 'transform 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
+                  }
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Payment sx={{ mr: 2, color: 'secondary.main', fontSize: 32 }} />
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>Total Spent</Typography>
+                  </Box>
+                  <Typography variant="h3" color="secondary.main" sx={{ fontWeight: 700, mb: 2 }}>
+                    Rs. {getTotalSpent()}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
         </Grid>
 
         {/* Left Column */}
@@ -203,8 +240,8 @@ const Dashboard = () => {
             sx={{ 
               p: 3, 
               mb: 4,
-              borderRadius: 2,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
+              borderRadius: 3,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.07)'
             }}
           >
             <Typography variant="h6" gutterBottom color="primary" sx={{ fontWeight: 600, mb: 3 }}>
@@ -240,96 +277,15 @@ const Dashboard = () => {
               )}
             </List>
           </Paper>
-
-          {/* Quick Actions */}
-          <Paper 
-            sx={{ 
-              p: 3,
-              borderRadius: 2,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
-            }}
-          >
-            <Typography variant="h6" gutterBottom color="primary" sx={{ fontWeight: 600, mb: 3 }}>
-              Quick Actions
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                variant="contained"
-                startIcon={<DirectionsCar />}
-                onClick={() => navigate('/booking')}
-                sx={{
-                  px: 3,
-                  py: 1.5,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontSize: '1rem',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                  '&:hover': {
-                    boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
-                  }
-                }}
-              >
-                Book Parking
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<AccessTime />}
-                onClick={() => navigate('/view-bookings')}
-                sx={{
-                  px: 3,
-                  py: 1.5,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontSize: '1rem'
-                }}
-              >
-                View Bookings
-              </Button>
-              {(user?.role === 'admin' || user?.role === 'security') && (
-                <Button
-                  variant="outlined"
-                  startIcon={<Videocam />}
-                  onClick={() => navigate('/camera-view')}
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontSize: '1rem'
-                  }}
-                >
-                  Camera Views
-                </Button>
-              )}
-              {user?.role === 'admin' && (
-                <>
-                  <Button
-                    variant="outlined"
-                    startIcon={<Security />}
-                    onClick={() => navigate('/security-management')}
-                    sx={{
-                      px: 3,
-                      py: 1.5,
-                      borderRadius: 2,
-                      textTransform: 'none',
-                      fontSize: '1rem'
-                    }}
-                  >
-                    Manage Security Staff
-                  </Button>
-                </>
-              )}
-            </Box>
-          </Paper>
         </Grid>
 
-        {/* Recent Bookings */}
+        {/* Right Column: Recent Bookings */}
         <Grid item xs={12} md={6}>
           <Paper 
             sx={{ 
               p: 3,
-              borderRadius: 2,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
+              borderRadius: 3,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.07)'
             }}
           >
             <Typography variant="h6" gutterBottom color="primary" sx={{ fontWeight: 600, mb: 3 }}>
@@ -364,6 +320,60 @@ const Dashboard = () => {
                 </ListItem>
               )}
             </List>
+          </Paper>
+        </Grid>
+
+        {/* Bottom Row: Quick Actions (full width, colored buttons) */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}>
+            <Typography variant="h6" gutterBottom color="primary" sx={{ fontWeight: 600, mb: 3 }}>
+              Quick Actions
+            </Typography>
+            <Grid container spacing={2}>
+              {visibleActions.map((action, idx) => (
+                <Grid item xs={12} sm={6} md={gridMd} key={action.label}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    color={action.color}
+                    startIcon={action.icon}
+                    onClick={action.onClick}
+                    sx={{
+                      py: 2,
+                      borderRadius: 3,
+                      fontSize: '1rem',
+                      fontWeight: 500,
+                      boxShadow:
+                        action.color === 'primary'
+                          ? '0 2px 8px rgba(25, 118, 210, 0.08)'
+                          : action.color === 'secondary'
+                          ? '0 2px 8px rgba(220, 0, 78, 0.08)'
+                          : action.color === 'info'
+                          ? '0 2px 8px rgba(1, 192, 255, 0.08)'
+                          : action.color === 'success'
+                          ? '0 2px 8px rgba(46, 125, 50, 0.08)'
+                          : undefined,
+                      transition: 'box-shadow 0.2s, background 0.2s',
+                      '&:hover': {
+                        boxShadow:
+                          action.color === 'primary'
+                            ? '0 6px 16px rgba(25, 118, 210, 0.13)'
+                            : action.color === 'secondary'
+                            ? '0 6px 16px rgba(220, 0, 78, 0.13)'
+                            : action.color === 'info'
+                            ? '0 6px 16px rgba(1, 192, 255, 0.13)'
+                            : action.color === 'success'
+                            ? '0 6px 16px rgba(46, 125, 50, 0.13)'
+                            : undefined,
+                        backgroundColor: theme => theme.palette[action.color].dark,
+                      },
+                    }}
+                  >
+                    {action.label}
+                  </Button>
+                </Grid>
+              ))}
+            </Grid>
           </Paper>
         </Grid>
       </Grid>
