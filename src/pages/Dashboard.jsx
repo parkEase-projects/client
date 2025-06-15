@@ -106,6 +106,13 @@ const Dashboard = () => {
       onClick: () => navigate('/security-management'),
       show: user?.role === 'admin',
     },
+    {
+      label: 'Manage Parking Areas',
+      icon: <Map />,
+      color: 'warning',
+      onClick: () => navigate('/parking-areas'),
+      show: user?.role === 'admin',
+    },
   ];
   const visibleActions = quickActions.filter(action => action.show);
   let gridMd = 3;

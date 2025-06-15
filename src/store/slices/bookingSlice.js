@@ -1,14 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/parking';
 
 // Async thunks
 export const fetchUserBookings = createAsyncThunk(
   'booking/fetchUserBookings',
-  async (_, { rejectWithValue }) => {
+  async (userId, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_URL}/api/bookings/user`);
+      const response = await axios.get(`${API_URL}/bookings/user/${userId}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -18,9 +18,9 @@ export const fetchUserBookings = createAsyncThunk(
 
 export const fetchBookingHistory = createAsyncThunk(
   'booking/fetchHistory',
-  async (_, { rejectWithValue }) => {
+  async (userId, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_URL}/api/bookings/history`);
+      const response = await axios.get(`${API_URL}/api/parking/bookings/history/${userId}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -32,7 +32,7 @@ export const cancelBooking = createAsyncThunk(
   'booking/cancel',
   async (bookingId, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_URL}/api/bookings/${bookingId}/cancel`);
+      const response = await axios.post(`${API_URL}/bookings/${bookingId}/cancel`);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -44,7 +44,7 @@ export const extendBooking = createAsyncThunk(
   'booking/extend',
   async ({ bookingId, newEndTime }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_URL}/api/bookings/${bookingId}/extend`, {
+      const response = await axios.post(`${API_URL}/bookings/${bookingId}/extend`, {
         newEndTime,
       });
       return response.data;

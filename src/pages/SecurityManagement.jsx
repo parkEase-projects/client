@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
   Typography,
   Box,
   Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Table,
   TableBody,
   TableCell,
@@ -12,64 +17,110 @@ import {
   TableHead,
   TableRow,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   Alert,
+  CircularProgress,
 } from '@mui/material';
-import { Delete, Add } from '@mui/icons-material';
+import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const SecurityManagement = () => {
-  const user = useSelector(state => state.auth.user);
+  const { user } = useSelector((state) => state.auth);
   const [openDialog, setOpenDialog] = useState(false);
-  const [newStaff, setNewStaff] = useState({
-    name: '',
+  const [securityStaff, setSecurityStaff] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({
+    username: '',
     email: '',
     phone: '',
   });
-  const [staffList, setStaffList] = useState([
-    { id: 1, name: 'John Doe', email: 'john@example.com', phone: '1234567890' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', phone: '0987654321' },
-  ]);
-  const [error, setError] = useState("");
+  const [formError, setFormError] = useState('');
 
-  const validateEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-  const validatePhone = (phone) => {
-    return /^\d{10}$/.test(phone);
+  useEffect(() => {
+    fetchSecurityStaff();
+  }, []);
+
+  const fetchSecurityStaff = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_URL}/api/users/security`);
+      setSecurityStaff(response.data);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch security staff');
+      console.error('Error fetching security staff:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddStaff = () => {
-    if (!newStaff.name || !newStaff.email || !newStaff.phone) {
-      setError("All fields are required.");
-      return;
-    }
-    if (!validateEmail(newStaff.email)) {
-      setError("Please enter a valid email address.");
-      return;
-    }
-    if (!validatePhone(newStaff.phone)) {
-      setError("Please enter a valid 10-digit phone number.");
-      return;
-    }
-    setStaffList([
-      ...staffList,
-      {
-        id: staffList.length + 1,
-        ...newStaff,
-      },
-    ]);
-    setNewStaff({ name: '', email: '', phone: '' });
+  const handleOpenDialog = () => {
+    setOpenDialog(true);
+    setFormData({
+      username: '',
+      email: '',
+      phone: '',
+    });
+    setFormError('');
+  };
+
+  const handleCloseDialog = () => {
     setOpenDialog(false);
-    setError("");
+    setFormError('');
   };
 
-  const handleRemoveStaff = (id) => {
-    setStaffList(staffList.filter(staff => staff.id !== id));
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const validateForm = () => {
+    if (!formData.username || !formData.email || !formData.phone) {
+      setFormError('All fields are required');
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setFormError('Please enter a valid email address');
+      return false;
+    }
+    if (!/^\d{10}$/.test(formData.phone)) {
+      setFormError('Please enter a valid 10-digit phone number');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    try {
+      const response = await axios.post(`${API_URL}/api/users/security`, formData);
+      setSecurityStaff(prev => [...prev, response.data]);
+      handleCloseDialog();
+      // Show success message
+      alert('Security staff added successfully. An email has been sent with login credentials.');
+    } catch (err) {
+      setFormError(err.response?.data?.message || 'Failed to add security staff');
+      console.error('Error adding security staff:', err);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to remove this security staff member?')) {
+      try {
+        await axios.delete(`${API_URL}/api/users/security/${id}`);
+        setSecurityStaff(prev => prev.filter(staff => staff.id !== id));
+      } catch (err) {
+        console.error('Error deleting security staff:', err);
+        alert('Failed to remove security staff member');
+      }
+    }
   };
 
   if (user?.role !== 'admin') {
@@ -99,77 +150,103 @@ const SecurityManagement = () => {
           </Typography>
           <Button
             variant="contained"
-            startIcon={<Add />}
-            onClick={() => setOpenDialog(true)}
+            startIcon={<AddIcon />}
+            onClick={handleOpenDialog}
           >
             Add Staff
           </Button>
         </Box>
 
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Phone</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {staffList.map((staff) => (
-                <TableRow key={staff.id}>
-                  <TableCell>{staff.name}</TableCell>
-                  <TableCell>{staff.email}</TableCell>
-                  <TableCell>{staff.phone}</TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      color="error"
-                      onClick={() => handleRemoveStaff(staff.id)}
-                    >
-                      <Delete />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-        <Dialog open={openDialog} onClose={() => { setOpenDialog(false); setError(""); }}>
-          <DialogTitle>Add New Security Staff</DialogTitle>
-          <DialogContent>
-            <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {error && <Alert severity="error">{error}</Alert>}
-              <TextField
-                label="Name"
-                fullWidth
-                value={newStaff.name}
-                onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
-              />
-              <TextField
-                label="Email"
-                fullWidth
-                type="email"
-                value={newStaff.email}
-                onChange={(e) => setNewStaff({ ...newStaff, email: e.target.value })}
-              />
-              <TextField
-                label="Phone"
-                fullWidth
-                value={newStaff.phone}
-                onChange={(e) => setNewStaff({ ...newStaff, phone: e.target.value })}
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-            <Button onClick={handleAddStaff} variant="contained">
-              Add Staff
-            </Button>
-          </DialogActions>
-        </Dialog>
+        {loading ? (
+          <Box display="flex" justifyContent="center" my={4}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Username</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Phone</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {securityStaff.map((staff) => (
+                  <TableRow key={staff.id}>
+                    <TableCell>{staff.username}</TableCell>
+                    <TableCell>{staff.email}</TableCell>
+                    <TableCell>{staff.phone}</TableCell>
+                    <TableCell align="right">
+                      <IconButton
+                        onClick={() => handleDelete(staff.id)}
+                        color="error"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </Paper>
+
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>Add Security Staff</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            {formError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {formError}
+              </Alert>
+            )}
+            <TextField
+              fullWidth
+              label="Username"
+              name="username"
+              value={formData.username}
+              onChange={handleInputChange}
+              margin="normal"
+              required
+            />
+            <TextField
+              fullWidth
+              label="Email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              margin="normal"
+              required
+            />
+            <TextField
+              fullWidth
+              label="Phone Number"
+              name="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
+              margin="normal"
+              required
+              helperText="Enter a 10-digit phone number"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleSubmit} variant="contained" color="primary">
+            Add Staff
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

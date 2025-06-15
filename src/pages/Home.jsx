@@ -28,6 +28,8 @@ import SlotsCarousel from "../components/SlotsCarousel";
 import ParkingAnnotator from "../components/ParkingAnnotator";
 import ParkingAreaList from "../components/ParkingAreaList";
 
+const API_URL = 'http://localhost:5000/api/parking/areas';
+
 const Home = () => {
   const dispatch = useDispatch();
   const { areas, loading, error } = useSelector((state) => state.parking);

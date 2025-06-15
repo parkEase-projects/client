@@ -10,6 +10,7 @@ export const login = createAsyncThunk(
     try {
       const response = await axios.post(`${API_URL}/api/auth/login`, credentials);
       localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -23,6 +24,7 @@ export const register = createAsyncThunk(
     try {
       const response = await axios.post(`${API_URL}/api/auth/register`, userData);
       localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -32,7 +34,23 @@ export const register = createAsyncThunk(
 
 export const logoutUser = createAsyncThunk('auth/logout', async () => {
   localStorage.removeItem('token');
+  localStorage.removeItem('user');
 });
+
+export const fetchUserProfile = createAsyncThunk(
+  'auth/fetchUserProfile',
+  async (_, { rejectWithValue, getState }) => {
+    try {
+      const token = getState().auth.token;
+      const response = await axios.get(`${API_URL}/api/auth/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data.user;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || 'Failed to fetch user profile');
+    }
+  }
+);
 
 const initialState = {
   user: null,
@@ -71,6 +89,10 @@ export const authSlice = createSlice({
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.token = action.payload.token;
+      })
+      // Fetch user profile after login if user is not present
+      .addCase(fetchUserProfile.fulfilled, (state, action) => {
+        state.user = action.payload;
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;

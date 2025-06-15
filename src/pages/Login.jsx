@@ -11,7 +11,7 @@ import {
   Paper,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { login, clearError } from '../store/slices/authSlice';
+import { login, clearError, fetchUserProfile } from '../store/slices/authSlice';
 import BackgroundLogo from '../images/bg-img.png';
 import PasswordField from '../components/PasswordField';
 import { validateEmail } from '../utils/validation';
@@ -19,7 +19,7 @@ import { validateEmail } from '../utils/validation';
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { isAuthenticated, loading, error } = useSelector((state) => state.auth);
+  const { isAuthenticated, loading, error, user } = useSelector((state) => state.auth);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -32,9 +32,12 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
+      if (!user) {
+        dispatch(fetchUserProfile());
+      }
       navigate('/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, user, dispatch]);
 
   // Handle backend error messages
   useEffect(() => {

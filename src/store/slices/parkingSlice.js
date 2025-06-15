@@ -2,18 +2,38 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { parkingAreas, getSlotsByArea } from '../../data/mockData';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 // Async Thunks
 export const fetchParkingAreas = createAsyncThunk(
   'parking/fetchAreas',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await axios.get(`${API_URL}/api/parking/areas`);
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || { error: 'Failed to fetch parking areas' });
-    }
+  async () => {
+    const response = await axios.get(`${API_URL}/api/parking/areas`);
+    return response.data;
+  }
+);
+
+export const createParkingArea = createAsyncThunk(
+  'parking/createArea',
+  async (areaData) => {
+    const response = await axios.post(`${API_URL}/api/parking/areas`, areaData);
+    return response.data;
+  }
+);
+
+export const updateParkingArea = createAsyncThunk(
+  'parking/updateArea',
+  async ({ id, ...areaData }) => {
+    const response = await axios.put(`${API_URL}/api/parking/areas/${id}`, areaData);
+    return response.data;
+  }
+);
+
+export const deleteParkingArea = createAsyncThunk(
+  'parking/deleteArea',
+  async (id) => {
+    await axios.delete(`${API_URL}/api/parking/areas/${id}`);
+    return id;
   }
 );
 
@@ -45,7 +65,7 @@ export const bookSlot = createAsyncThunk(
   'parking/bookSlot',
   async (bookingData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_URL}/api/parking/book`, bookingData);
+      const response = await axios.post(`${API_URL}/book`, bookingData);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -57,7 +77,7 @@ export const fetchUserBookings = createAsyncThunk(
   'parking/fetchUserBookings',
   async (userId, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_URL}/api/parking/bookings/user/${userId}`);
+      const response = await axios.get(`${API_URL}/bookings/user/${userId}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -81,7 +101,7 @@ export const cancelBooking = createAsyncThunk(
   'parking/cancelBooking',
   async (bookingId, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_URL}/api/parking/bookings/${bookingId}/cancel`);
+      const response = await axios.post(`${API_URL}/bookings/${bookingId}/cancel`);
       return { ...response.data, bookingId };
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -93,7 +113,7 @@ export const fetchParkingSlots = createAsyncThunk(
   'parking/fetchParkingSlots',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_URL}/api/parking/slots`);
+      const response = await axios.get(`${API_URL}/slots`);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -105,7 +125,7 @@ export const preBookSlot = createAsyncThunk(
   'parking/preBookSlot',
   async (bookingData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_URL}/api/parking/book/pre`, bookingData);
+      const response = await axios.post(`${API_URL}/book/pre`, bookingData);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -117,7 +137,7 @@ export const processWalkIn = createAsyncThunk(
   'parking/processWalkIn',
   async (bookingData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_URL}/api/parking/book/walkin`, bookingData);
+      const response = await axios.post(`${API_URL}/book/walkin`, bookingData);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -156,7 +176,7 @@ const parkingSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Parking Areas
+      // Fetch areas
       .addCase(fetchParkingAreas.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -167,7 +187,22 @@ const parkingSlice = createSlice({
       })
       .addCase(fetchParkingAreas.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload?.error || 'Failed to fetch parking areas';
+        state.error = action.error.message;
+      })
+      // Create area
+      .addCase(createParkingArea.fulfilled, (state, action) => {
+        state.areas.push(action.payload);
+      })
+      // Update area
+      .addCase(updateParkingArea.fulfilled, (state, action) => {
+        const index = state.areas.findIndex(area => area.id === action.payload.id);
+        if (index !== -1) {
+          state.areas[index] = action.payload;
+        }
+      })
+      // Delete area
+      .addCase(deleteParkingArea.fulfilled, (state, action) => {
+        state.areas = state.areas.filter(area => area.id !== action.payload);
       })
 
       // Fetch Area Slots

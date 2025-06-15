@@ -80,14 +80,16 @@ const Navbar = () => {
                 </Button>
               )}
               
-              <Button
-                color="inherit"
-                component={RouterLink}
-                to="/reports"
-                startIcon={<Report />}
-              >
-                Reports
-              </Button>
+              {user?.role !== 'security' && (
+                <Button
+                  color="inherit"
+                  component={RouterLink}
+                  to="/reports"
+                  startIcon={<Report />}
+                >
+                  Reports
+                </Button>
+              )}
               <IconButton
                 size="large"
                 aria-label="account of current user"

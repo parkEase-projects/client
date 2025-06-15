@@ -29,6 +29,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import CameraView from './pages/CameraView';
 import SecurityManagement from './pages/SecurityManagement';
+import ParkingAreas from './pages/ParkingAreas';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -87,6 +88,7 @@ function AppContent() {
           <Route path="/view-bookings" element={<ProtectedRoute><ViewBookings /></ProtectedRoute>} />
           <Route path="/camera-view" element={<ProtectedRoute><CameraView /></ProtectedRoute>} />
           <Route path="/security-management" element={<ProtectedRoute><SecurityManagement /></ProtectedRoute>} />
+          <Route path="/parking-areas" element={<ProtectedRoute><ParkingAreas /></ProtectedRoute>} />
           
           {/* Footer Pages - Public */}
           <Route path="/about-us" element={<AboutUs />} />

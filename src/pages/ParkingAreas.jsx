@@ -14,46 +14,122 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  MenuItem,
 } from '@mui/material';
-import { Add as AddIcon, DirectionsCar } from '@mui/icons-material';
-import { fetchParkingAreas } from '../store/slices/parkingSlice';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, DirectionsCar } from '@mui/icons-material';
+import { fetchParkingAreas, createParkingArea, updateParkingArea, deleteParkingArea } from '../store/slices/parkingSlice';
 
 const ParkingAreas = () => {
   const dispatch = useDispatch();
   const { areas, loading, error } = useSelector((state) => state.parking);
   const { user } = useSelector((state) => state.auth);
   const [openDialog, setOpenDialog] = useState(false);
-  const [newArea, setNewArea] = useState({
+  const [editingArea, setEditingArea] = useState(null);
+  const [formData, setFormData] = useState({
     name: '',
     total_slots: '',
     description: '',
+    status: 'active'
   });
 
   useEffect(() => {
     dispatch(fetchParkingAreas());
   }, [dispatch]);
 
-  const handleCreateArea = async () => {
-    // TODO: Implement area creation
-    setOpenDialog(false);
+  const handleOpenDialog = (area = null) => {
+    if (area) {
+      setEditingArea(area);
+      setFormData({
+        name: area.name,
+        total_slots: area.total_slots,
+        description: area.description,
+        status: area.status
+      });
+    } else {
+      setEditingArea(null);
+      setFormData({
+        name: '',
+        total_slots: '',
+        description: '',
+        status: 'active'
+      });
+    }
+    setOpenDialog(true);
   };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setEditingArea(null);
+    setFormData({
+      name: '',
+      total_slots: '',
+      description: '',
+      status: 'active'
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async () => {
+    try {
+      if (editingArea) {
+        await dispatch(updateParkingArea({ id: editingArea.id, ...formData }));
+      } else {
+        await dispatch(createParkingArea(formData));
+      }
+      handleCloseDialog();
+    } catch (error) {
+      console.error('Error saving parking area:', error);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this parking area?')) {
+      try {
+        await dispatch(deleteParkingArea(id));
+      } catch (error) {
+        console.error('Error deleting parking area:', error);
+      }
+    }
+  };
+
+  if (user?.role !== 'admin') {
+    return (
+      <Container>
+        <Alert severity="error" sx={{ mt: 4 }}>
+          You don't have permission to access this page.
+        </Alert>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="lg">
       <Box sx={{ mt: 4, mb: 4 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h4" component="h1">
-            Parking Areas
+            Parking Areas Management
           </Typography>
-          {user?.role === 'admin' && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setOpenDialog(true)}
-            >
-              Add Parking Area
-            </Button>
-          )}
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenDialog()}
+          >
+            Add Parking Area
+          </Button>
         </Box>
 
         {error && (
@@ -67,119 +143,108 @@ const ParkingAreas = () => {
             <CircularProgress />
           </Box>
         ) : (
-          <Grid container spacing={3}>
-            {areas.map((area) => (
-              <Grid item xs={12} md={4} key={area.id}>
-                <Paper
-                  sx={{
-                    p: 3,
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    position: 'relative',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      p: 1,
-                      bgcolor: area.status === 'active' ? 'success.main' : 'warning.main',
-                      color: 'white',
-                      borderBottomLeftRadius: 8,
-                    }}
-                  >
-                    {area.status}
-                  </Box>
-
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <DirectionsCar sx={{ fontSize: 40, mr: 2, color: 'primary.main' }} />
-                    <Typography variant="h6" component="h2">
-                      {area.name}
-                    </Typography>
-                  </Box>
-
-                  <Typography color="textSecondary" paragraph>
-                    {area.description}
-                  </Typography>
-
-                  <Box mt="auto" pt={2}>
-                    <Grid container spacing={2}>
-                      <Grid item xs={6}>
-                        <Paper
-                          sx={{
-                            p: 1,
-                            textAlign: 'center',
-                            bgcolor: 'primary.light',
-                            color: 'white',
-                          }}
-                        >
-                          <Typography variant="body2">Total Slots</Typography>
-                          <Typography variant="h6">{area.total_slots}</Typography>
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Paper
-                          sx={{
-                            p: 1,
-                            textAlign: 'center',
-                            bgcolor: 'success.light',
-                            color: 'white',
-                          }}
-                        >
-                          <Typography variant="body2">Available</Typography>
-                          <Typography variant="h6">{area.available_slots}</Typography>
-                        </Paper>
-                      </Grid>
-                    </Grid>
-                  </Box>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Total Slots</TableCell>
+                  <TableCell>Description</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {areas.map((area) => (
+                  <TableRow key={area.id}>
+                    <TableCell>{area.name}</TableCell>
+                    <TableCell>{area.total_slots}</TableCell>
+                    <TableCell>{area.description}</TableCell>
+                    <TableCell>
+                      <Box
+                        sx={{
+                          display: 'inline-block',
+                          px: 1,
+                          py: 0.5,
+                          borderRadius: 1,
+                          bgcolor: area.status === 'active' ? 'success.light' : 'warning.light',
+                          color: area.status === 'active' ? 'success.dark' : 'warning.dark',
+                        }}
+                      >
+                        {area.status}
+                      </Box>
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton onClick={() => handleOpenDialog(area)} color="primary">
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton onClick={() => handleDelete(area.id)} color="error">
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
       </Box>
 
-      {/* Add Parking Area Dialog */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add New Parking Area</DialogTitle>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {editingArea ? 'Edit Parking Area' : 'Add New Parking Area'}
+        </DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 2 }}>
+          <Box sx={{ mt: 2 }}>
             <TextField
               fullWidth
-              label="Area Name"
-              value={newArea.name}
-              onChange={(e) => setNewArea({ ...newArea, name: e.target.value })}
-              sx={{ mb: 2 }}
+              label="Name"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              margin="normal"
+              required
             />
             <TextField
               fullWidth
               label="Total Slots"
+              name="total_slots"
               type="number"
-              value={newArea.total_slots}
-              onChange={(e) => setNewArea({ ...newArea, total_slots: e.target.value })}
-              sx={{ mb: 2 }}
+              value={formData.total_slots}
+              onChange={handleInputChange}
+              margin="normal"
+              required
             />
             <TextField
               fullWidth
               label="Description"
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              margin="normal"
               multiline
               rows={3}
-              value={newArea.description}
-              onChange={(e) => setNewArea({ ...newArea, description: e.target.value })}
             />
+            <TextField
+              fullWidth
+              select
+              label="Status"
+              name="status"
+              value={formData.status}
+              onChange={handleInputChange}
+              margin="normal"
+              required
+            >
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="inactive">Inactive</MenuItem>
+              <MenuItem value="maintenance">Maintenance</MenuItem>
+            </TextField>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleCreateArea}
-            disabled={!newArea.name || !newArea.total_slots}
-          >
-            Create
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleSubmit} variant="contained" color="primary">
+            {editingArea ? 'Update' : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>
