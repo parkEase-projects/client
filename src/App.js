@@ -4,6 +4,9 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Provider } from 'react-redux';
 import store from './store';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { fetchUserProfile } from './store/slices/authSlice';
 
 // Layout components
 import Navbar from './components/layout/Navbar';
@@ -62,6 +65,14 @@ const theme = createTheme({
 
 // AppContent component to use useLocation hook
 function AppContent() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      dispatch(fetchUserProfile());
+    }
+  }, [dispatch]);
   const location = useLocation();
   const hideFooterPaths = ['/login', '/register', '/forgot-password'];
   const shouldShowFooter = !hideFooterPaths.includes(location.pathname);
