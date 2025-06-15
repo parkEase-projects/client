@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Box, Grid, Typography, Paper, Tooltip, Button, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert, TextField, FormControl, InputLabel, Select, MenuItem, ToggleButton, ToggleButtonGroup } from '@mui/material';
-import { 
-  getSlotsByArea, 
-  getAreaById, 
-  updateSlotStatus, 
-  calculateBookingAmount,
-  createBooking 
-} from '../data/mockData';
+import { Box, Grid, Typography, Paper, Tooltip, Button, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert, TextField, FormControl, InputLabel, Select, MenuItem, ToggleButton, ToggleButtonGroup, CircularProgress } from '@mui/material';
+import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -27,6 +21,15 @@ const statusLabels = {
   broken: 'Broken',
   handicap: 'Handicap',
   not_available: 'Not Available',
+};
+
+const HOURLY_RATE = 50; // Base rate per hour in rupees
+
+const calculateBookingAmount = (startTime, endTime) => {
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  const hours = (end - start) / (1000 * 60 * 60);
+  return Math.ceil(hours * HOURLY_RATE);
 };
 
 function useQuery() {
@@ -57,7 +60,6 @@ const ParkingSlots = () => {
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
   const [parkingFee, setParkingFee] = useState(0);
-  const HOURLY_RATE = 50; // Base rate per hour in rupees
   const [cardType, setCardType] = useState('');
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
@@ -65,34 +67,40 @@ const ParkingSlots = () => {
   const [bookingReference, setBookingReference] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [showError, setShowError] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('Loading slots for area:', areaId); // Debug log
-    const areaSlots = getSlotsByArea(areaId);
-    console.log('Retrieved slots:', areaSlots); // Debug log
-    
-    // Create 20 slots (10 for each row) if not enough slots
-    const totalSlots = Array.from({ length: 20 }, (_, i) => {
-      const existingSlot = areaSlots[i];
-      if (existingSlot) return existingSlot;
-      return {
-        id: i + 1,
-        slotNumber: i + 1,
-        areaId: areaId,
-        status: 'available'
-      };
-    });
-    
-    console.log('Total slots:', totalSlots); // Debug log
-    setSlots(totalSlots);
-  }, [areaId]);
+    const fetchSlots = async () => {
+      try {
+        setLoading(true);
+        const startTime = new Date(date + 'T' + time);
+        const endTime = new Date(startTime.getTime() + (parseInt(parkingHours || 1) * 60 * 60 * 1000));
+        const slotsResponse = await axios.get(
+          `${API_URL}/api/parking/areas/${areaId}/slots`, {
+            params: {
+              start_time: startTime.toISOString(),
+              end_time: endTime.toISOString()
+            }
+          }
+        );
+        setSlots(slotsResponse.data);
+      } catch (error) {
+        setErrorMessage('Failed to load parking slots. Please try again.');
+        setShowError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSlots();
+  }, [areaId, date, time, parkingHours]);
 
   const handleParkingHoursChange = (e) => {
     const hours = e.target.value;
     setParkingHours(hours);
     if (hours > 0) {
-      const fee = calculateBookingAmount(date + 'T' + time, 
-        new Date(new Date(date + 'T' + time).getTime() + hours * 60 * 60 * 1000).toISOString());
+      const startTime = new Date(date + 'T' + time);
+      const endTime = new Date(startTime.getTime() + hours * 60 * 60 * 1000);
+      const fee = calculateBookingAmount(startTime, endTime);
       setParkingFee(fee);
     } else {
       setParkingFee(0);
@@ -118,7 +126,7 @@ const ParkingSlots = () => {
     setOpenDialog(false);
   };
 
-  const handleBookingConfirm = () => {
+  const handleBookingConfirm = async () => {
     try {
       if (!vehicleNumber || !parkingHours || !name) {
         setErrorMessage('Please fill in all required fields');
@@ -130,47 +138,39 @@ const ParkingSlots = () => {
       const endDateTime = new Date(startDateTime.getTime() + (parseInt(parkingHours) * 60 * 60 * 1000));
       
       const bookingData = {
-        slotId: selectedSlot.id,
-        areaId: areaId,
-        userId: 'user123', // This would come from auth context in a real app
-        startTime: startDateTime.toISOString(),
-        endTime: endDateTime.toISOString(),
-        vehicleNumber: vehicleNumber,
-        customerName: name,
-        amount: parkingFee,
-        status: 'confirmed'
+        slot_id: selectedSlot.id,
+        area_id: areaId,
+        vehicle_number: vehicleNumber,
+        start_time: startDateTime.toISOString(),
+        end_time: endDateTime.toISOString(),
+        amount: parkingFee
       };
 
-      // Get existing bookings or initialize empty array
-      const existingBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
-      
-      // Add new booking with unique ID
-      const newBooking = {
-        ...bookingData,
-        id: Date.now(), // Use timestamp as unique ID
-      };
-      
-      existingBookings.push(newBooking);
-      
-      // Save updated bookings to localStorage
-      localStorage.setItem('bookings', JSON.stringify(existingBookings));
-      
-      // Update slot status
-      updateSlotStatus(selectedSlot.id, 'booked');
-      
-      // Save updated slots to localStorage
-      const updatedSlots = slots.map(slot => 
-        slot.id === selectedSlot.id ? { ...slot, status: 'booked' } : slot
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API_URL}/api/parking/book`,
+        bookingData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
-      setSlots(updatedSlots);
-      localStorage.setItem('parkingSlots', JSON.stringify(updatedSlots));
-
-      setBookingReference(newBooking.id);
-      setOpenDialog(false);
-      setSuccessDialogOpen(true);
+      
+      if (response.status === 201) {
+        // Update local state
+        const updatedSlots = slots.map(slot => 
+          slot.id === selectedSlot.id ? { ...slot, status: 'booked' } : slot
+        );
+        setSlots(updatedSlots);
+        
+        setBookingReference(response.data.id);
+        setOpenDialog(false);
+        setSuccessDialogOpen(true);
+      }
     } catch (error) {
       console.error('Booking failed:', error);
-      setErrorMessage('Failed to complete booking. Please try again.');
+      setErrorMessage(error.response?.data?.error || 'Failed to complete booking. Please try again.');
       setShowError(true);
     }
   };
@@ -227,93 +227,45 @@ const ParkingSlots = () => {
 
       <Paper sx={{ p: 2, mb: 2 }}>
         <Grid container spacing={2} direction="column" alignItems="center">
-          {/* Top row of 10 slots */}
-          <Grid item container spacing={2} justifyContent="center" sx={{ mb: 3, mt:2 }}>
-            {displaySlots.slice(0, 10).map((slot) => (
-              <Grid item key={slot.id} sx={{ display: 'flex', justifyContent: 'center' }}>
-                <Tooltip title={statusLabels[slot.status] + (slot.user ? ` (${slot.user})` : '')}>
-                  <Box
-                    sx={{
-                      width: 50,
-                      height: 70,
-                      bgcolor: statusColors[slot.status],
-                      color: slot.status === 'available' ? '#3f51b5' : '#fff',
-                      border: '2px solid #3f51b5',
-                      borderRadius: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 'bold',
-                      fontSize: 18,
-                      cursor: slot.status === 'available' ? 'pointer' : 'not-allowed',
-                      opacity: slot.status === 'not_available' ? 0.5 : 1,
-                    }}
-                    onClick={() => handleSlotClick(slot)}
-                  >
-                    {slot.id}
-                  </Box>
-                </Tooltip>
-              </Grid>
-            ))}
-          </Grid>
-          
-          {/* Dividing line */}
-          <Grid item xs={12} sx={{ width: '100%', px: 2 }}>
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: 'column',
-      alignItems: 'center', 
-      gap: '6px', 
-      width: '100%', 
-      my: 2 
-    }}>
-      <Box sx={{ 
-        width: '70%', 
-        height: '4px', 
-        bgcolor: '#FFD700', 
-        boxShadow: '0 2px 4px rgba(0,0,0,0.2)', 
-        borderRadius: '2px' 
-      }} />
-      <Box sx={{ 
-        width: '70%', 
-        height: '4px', 
-        bgcolor: '#FFD700', 
-        boxShadow: '0 2px 4px rgba(0,0,0,0.2)', 
-        borderRadius: '2px' 
-      }} />
-    </Box>
-  </Grid>
-
-
-          {/* Bottom row of 10 slots */}
-          <Grid item container spacing={2} justifyContent="center">
-            {displaySlots.slice(10, 20).map((slot) => (
-              <Grid item key={slot.id} sx={{ display: 'flex', justifyContent: 'center', mt:3, mb:2 }}>
-                <Tooltip title={statusLabels[slot.status] + (slot.user ? ` (${slot.user})` : '')}>
-                  <Box
-                    sx={{
-                      width: 50,
-                      height: 70,
-                      bgcolor: statusColors[slot.status],
-                      color: slot.status === 'available' ? '#3f51b5' : '#fff',
-                      border: '2px solid #3f51b5',
-                      borderRadius: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 'bold',
-                      fontSize: 18,
-                      cursor: slot.status === 'available' ? 'pointer' : 'not-allowed',
-                      opacity: slot.status === 'not_available' ? 0.5 : 1,
-                    }}
-                    onClick={() => handleSlotClick(slot)}
-                  >
-                    {slot.id}
-                  </Box>
-                </Tooltip>
-              </Grid>
-            ))}
-          </Grid>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <Grid item container spacing={2} justifyContent="center" sx={{ mb: 3, mt: 2 }}>
+              {displaySlots.map((slot) => (
+                <Grid item key={slot.id} sx={{ display: 'flex', justifyContent: 'center' }}>
+                  <Tooltip title={statusLabels[slot.status] + (slot.user ? ` (${slot.user})` : '')}>
+                    <Box
+                      sx={{
+                        width: 50,
+                        height: 70,
+                        bgcolor:
+                          slot.id === selectedSlot?.id
+                            ? '#4caf50' // Green for selected
+                            : slot.status === 'booked'
+                            ? '#f06292' // Pink for booked
+                            : '#fff',   // White for available
+                        color: slot.status === 'available' || slot.id === selectedSlot?.id ? '#3f51b5' : '#fff',
+                        border: '2px solid #3f51b5',
+                        borderRadius: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 'bold',
+                        fontSize: 18,
+                        cursor: slot.status === 'available' ? 'pointer' : 'not-allowed',
+                        opacity: slot.status === 'not_available' ? 0.5 : 1,
+                      }}
+                      onClick={() => handleSlotClick(slot)}
+                    >
+                      {slot.slot_number}
+                    </Box>
+                  </Tooltip>
+                </Grid>
+              ))}
+            </Grid>
+          )}
         </Grid>
       </Paper>
       <Paper sx={{ p: 2, mt: 2 }}>
